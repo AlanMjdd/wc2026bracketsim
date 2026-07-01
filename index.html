@@ -1267,6 +1267,109 @@
     }
 
     // =========================================================
+    // ====== MIGRASI SATU KALI: PINDAHKAN DATA LAMA KE FIRESTORE ==
+    // =========================================================
+    // CARA PAKAI: buka situs ini di browser, tekan F12 -> tab Console ->
+    // ketik migrateAllDataToFirestore() lalu tekan Enter. Jalankan SEKALI SAJA.
+    //
+    // PENTING SEBELUM DIJALANKAN:
+    // 1. Hapus dulu dokumen yang sudah kamu buat manual di koleksi "news" dan
+    //    "schedule" di Firestore Console (biar tidak dobel/duplikat).
+    // 2. Setelah dijalankan sekali dan berhasil, JANGAN dijalankan lagi,
+    //    karena akan menambahkan data yang sama untuk kedua kalinya (duplikat).
+    async function migrateAllDataToFirestore() {
+        if (!firebaseReady || !db) {
+            console.error("Firestore belum siap. Cek firebaseConfig kamu dulu.");
+            return;
+        }
+        if (!confirm("Ini akan menambahkan 15 berita + 24 jadwal pertandingan ke Firestore.\n\nPastikan koleksi 'news' dan 'schedule' KOSONG dulu (hapus dokumen manual yang sudah kamu buat), supaya tidak duplikat.\n\nLanjutkan?")) {
+            console.log("Migrasi dibatalkan.");
+            return;
+        }
+
+        // --- 15 berita asli (sama seperti NEWS_DATA bawaan kode) ---
+        const seedNews = [
+            { icon: '😲', source: 'Jernih.id', title: 'Kejutan Besar 32 Besar: Jerman dan Belanda Angkat Koper', snippet: 'Jerman tersingkir lewat adu penalti dari Paraguay, sementara Belanda kalah dramatis dari Maroko. Kedua raksasa Eropa ini harus mengakhiri langkah mereka lebih cepat dari perkiraan banyak pengamat.', url: 'https://www.jernih.id/kejutan-piala-dunia-2026-jerman-dan-belanda-angkat-koper-brasil-lolos-dramatis-ke-16-besar' },
+            { icon: '⚽', source: 'Bola.com', title: 'Mbappe Bersinar, Prancis Melaju Mulus ke 16 Besar', snippet: 'Kylian Mbappe menyumbang dua gol saat Prancis menundukkan Swedia dengan skor telak 3-0 di babak 32 besar, sekaligus mengunci tiket ke babak 16 besar untuk berjumpa pemenang laga Jerman melawan Paraguay.', url: 'https://www.bola.com/piala-dunia/read/8128018/jadwal-pertandingan-32-besar-piala-dunia-2026-hari-ini-rabu-1-juli' },
+            { icon: '🧤', source: 'Okezone', title: 'Bono Jadi Pahlawan, Maroko Singkirkan Belanda Lewat Penalti', snippet: 'Kiper Yassine Bounou tampil gemilang dengan menggagalkan penalti Belanda, membawa Maroko menang adu penalti 3-2 dan melenggang ke babak 16 besar Piala Dunia 2026.', url: 'https://www.okezone.com/tag/piala-dunia-2026' },
+            { icon: '🇧🇷', source: 'Bola.com', title: 'Brasil Susah Payah Depak Jepang 2-1', snippet: 'Gol dramatis Gabriel Martinelli pada masa injury time memastikan Brasil melangkah ke babak 16 besar usai mengalahkan Jepang, menyisakan Australia sebagai satu-satunya wakil Asia yang masih bertahan di turnamen.', url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026' },
+            { icon: '🎉', source: 'SINDOnews', title: 'Paraguay Tetapkan Hari Libur Nasional Usai Singkirkan Jerman', snippet: 'Kemenangan adu penalti 4-3 atas Jerman membuat pemerintah Paraguay memutuskan memberikan hari libur nasional bagi warganya sebagai bentuk perayaan pencapaian bersejarah timnas mereka.', url: 'https://www.sindonews.com/topic/146307/piala-dunia-2026' },
+            { icon: '🍁', source: 'Bola.com', title: 'Kanada Jadi Tim Pertama yang Amankan Tiket 16 Besar', snippet: 'Gol telat Stephen Eustaquio membawa Kanada menang 1-0 atas Afrika Selatan pada laga pembuka babak 32 besar, menjadikan mereka tim pertama yang memastikan diri lolos ke babak berikutnya.', url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026' },
+            { icon: '✈️', source: 'Detikcom', title: 'Timnas Korea Selatan Disambut Kekecewaan Suporter di Bandara', snippet: 'Sejumlah suporter yang kecewa berteriak menuntut pelatih Hong Myung-bo mundur saat skuad Taegeuk Warriors tiba di Bandara Internasional Incheon usai tersingkir dari Piala Dunia 2026.', url: 'https://www.detik.com/tag/piala-dunia-2026' },
+            { icon: '📋', source: 'CNN Indonesia', title: 'Jadwal Lengkap Babak 32 Besar hingga 4 Juli', snippet: 'Babak 32 besar Piala Dunia 2026 berlangsung lebih dari sepekan, mulai 29 Juni hingga 4 Juli 2026, dengan 16 laga yang tersebar di berbagai kota tuan rumah Amerika Serikat, Kanada, dan Meksiko.', url: 'https://www.cnnindonesia.com/olahraga/20260628114254-142-1374264/jadwal-lengkap-32-besar-piala-dunia-2026-sajikan-laga-seru' },
+            { icon: '📺', source: 'Goal.com Indonesia', title: 'TVRI Pegang Hak Siar Eksklusif, Siaran Gratis Lewat Dua Kanal', snippet: 'TVRI menyiarkan seluruh pertandingan Piala Dunia 2026 secara gratis melalui kanal TVRI Nasional dan TVRI Sport, serta menggandeng platform OTT MAXstream TV dan Folaplay untuk layanan streaming pendukung.', url: 'https://www.goal.com/id/berita/jadwal-siaran-langsung-piala-dunia-2026-tvri/bltaff4509465b81a4a' },
+            { icon: '🗣️', source: 'Bola.com', title: 'Legenda Kritik Mentalitas Jerman usai Tersingkir', snippet: 'Sejumlah mantan pemain menyoroti minimnya rencana cadangan dan kegagalan eksekusi penalti sebagai penyebab utama tersingkirnya Jerman dari Piala Dunia 2026 di tangan Paraguay.', url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026' },
+            { icon: '📝', source: 'Kompas TV', title: '32 Tim yang Melaju ke Babak Gugur Sudah Lengkap', snippet: 'Daftar 32 negara yang lolos ke fase gugur terdiri dari 12 juara grup, 12 tim runner-up, dan 8 tim peringkat ketiga terbaik, setelah seluruh laga fase grup Piala Dunia 2026 rampung dimainkan.', url: 'https://www.kompas.tv/olahraga/677558/daftar-32-tim-lolos-ke-babak-gugur-piala-dunia-2026-dan-jadwal-lengkap-pertandingannya' },
+            { icon: '🗂️', source: 'Kompas.com', title: 'Bagan dan Jadwal Lengkap 32 Besar', snippet: 'Fase grup Piala Dunia 2026 menghasilkan total 72 pertandingan dengan 215 gol, sebelum turnamen memasuki fase gugur murni di mana setiap tim tidak lagi punya ruang untuk melakukan kesalahan.', url: 'https://bola.kompas.com/read/2026/06/29/10315708/bagan-32-besar-piala-dunia-2026-lengkap-dan-jadwal-laga' },
+            { icon: '▶️', source: 'Katadata', title: 'Nonton Highlight Piala Dunia 2026 secara Legal di YouTube', snippet: 'Meski siaran langsung penuh dibatasi aturan hak siar teritorial, YouTube tetap berperan sebagai wadah resmi untuk cuplikan gol dan momen penting lewat kanal-kanal mitra resmi TVRI.', url: 'https://katadata.co.id/lifestyle/varia/6a3492892836f/apakah-nonton-live-streaming-piala-dunia-2026-bisa-di-youtube' },
+            { icon: '📚', source: 'Wikipedia', title: 'Rekap Lengkap Babak 32 Besar Piala Dunia 2026', snippet: 'Halaman ensiklopedia ini merangkum seluruh 16 pertandingan babak 32 besar beserta rekor pertemuan sebelumnya antar tim yang berlaga di ajang Piala Dunia.', url: 'https://id.wikipedia.org/wiki/Babak_32_besar_Piala_Dunia_FIFA_2026' },
+            { icon: '🔄', source: 'PDI Perjuangan Bali News', title: 'Update Jadwal dan Hasil Babak 32 Besar Hari demi Hari', snippet: 'Portal ini merangkum hasil pertandingan serta jadwal laga berikutnya secara harian sepanjang babak 32 besar berlangsung hingga 4 Juli 2026, termasuk analisis singkat tiap pertandingan besar.', url: 'https://www.pdiperjuanganbali.id/jadwal-lengkap-babak-32-besar-piala-dunia-2026' }
+        ];
+
+        // --- 16 pertandingan R32 asli ---
+        const seedR32 = [
+            { day: 'Senin, 29 Juni 2026', time: '02:00 WIB', t1: 'RSA', t2: 'CAN', venue: 'Los Angeles Stadium, AS', status: 'done', score: '0-1' },
+            { day: 'Selasa, 30 Juni 2026', time: '00:00 WIB', t1: 'BRA', t2: 'JPN', venue: 'Houston Stadium, AS', status: 'done', score: '2-1' },
+            { day: 'Selasa, 30 Juni 2026', time: '03:30 WIB', t1: 'GER', t2: 'PAR', venue: 'Boston Stadium, AS', status: 'done', score: '0-0 (Pen 3-4)' },
+            { day: 'Selasa, 30 Juni 2026', time: '08:00 WIB', t1: 'NED', t2: 'MAR', venue: 'Monterrey Stadium, Meksiko', status: 'done', score: '1-1 (Pen 3-2)' },
+            { day: 'Rabu, 1 Juli 2026', time: '00:00 WIB', t1: 'CIV', t2: 'NOR', venue: 'Dallas Stadium, AS', status: 'done', score: '1-2' },
+            { day: 'Rabu, 1 Juli 2026', time: '04:00 WIB', t1: 'FRA', t2: 'SWE', venue: 'New York New Jersey Stadium, AS', status: 'done', score: '3-0' },
+            { day: 'Rabu, 1 Juli 2026', time: '08:00 WIB', t1: 'MEX', t2: 'ECU', venue: 'Mexico City Stadium, Meksiko', status: 'done', score: '2-0' },
+            { day: 'Rabu, 1 Juli 2026', time: '23:00 WIB', t1: 'ENG', t2: 'COD', venue: 'Atlanta Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Kamis, 2 Juli 2026', time: '03:00 WIB', t1: 'BEL', t2: 'SEN', venue: 'Seattle Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Kamis, 2 Juli 2026', time: '07:00 WIB', t1: 'USA', t2: 'BIH', venue: 'San Francisco Bay Area Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Jumat, 3 Juli 2026', time: '02:00 WIB', t1: 'ESP', t2: 'AUT', venue: 'Los Angeles Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Jumat, 3 Juli 2026', time: '06:00 WIB', t1: 'POR', t2: 'CRO', venue: 'Toronto Stadium, Kanada', status: 'upcoming', score: null },
+            { day: 'Jumat, 3 Juli 2026', time: '10:00 WIB', t1: 'SUI', t2: 'ALG', venue: 'BC Place Vancouver, Kanada', status: 'upcoming', score: null },
+            { day: 'Sabtu, 4 Juli 2026', time: '01:00 WIB', t1: 'AUS', t2: 'EGY', venue: 'Dallas Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Sabtu, 4 Juli 2026', time: '05:00 WIB', t1: 'ARG', t2: 'CPV', venue: 'Miami Stadium, AS', status: 'upcoming', score: null },
+            { day: 'Sabtu, 4 Juli 2026', time: '08:30 WIB', t1: 'COL', t2: 'GHA', venue: 'Kansas City Stadium, AS', status: 'upcoming', score: null }
+        ];
+
+        // --- 8 pertandingan R16 asli ---
+        const seedR16 = [
+            { day: 'Minggu, 5 Juli 2026', time: '00:00 WIB', t1: 'CAN', t2: 'MAR', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Minggu, 5 Juli 2026', time: '04:00 WIB', t1: 'PAR', t2: 'FRA', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Senin, 6 Juli 2026', time: '03:00 WIB', t1: 'BRA', t2: 'NOR', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Senin, 6 Juli 2026', time: '07:00 WIB', t1: 'MEX', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Selasa, 7 Juli 2026', time: '02:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Selasa, 7 Juli 2026', time: '07:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Selasa, 7 Juli 2026', time: '23:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+            { day: 'Rabu, 8 Juli 2026', time: '03:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null }
+        ];
+
+        try {
+            console.log("Mulai migrasi...");
+            const batch = db.batch();
+
+            seedNews.forEach((item, idx) => {
+                const ref = db.collection('news').doc();
+                // Supaya urutan "terbaru" tetap sama seperti urutan asli,
+                // berita paling atas diberi waktu paling baru.
+                const fakeTime = new Date(Date.now() - idx * 60000); // selisih 1 menit per item
+                batch.set(ref, { ...item, createdAt: firebase.firestore.Timestamp.fromDate(fakeTime) });
+            });
+
+            seedR32.forEach((item, idx) => {
+                const ref = db.collection('schedule').doc();
+                batch.set(ref, { ...item, round: 'R32', order: idx });
+            });
+
+            seedR16.forEach((item, idx) => {
+                const ref = db.collection('schedule').doc();
+                batch.set(ref, { ...item, round: 'R16', order: 100 + idx }); // +100 supaya selalu tampil setelah R32
+            });
+
+            await batch.commit();
+            console.log("✅ Migrasi selesai! 15 berita + 24 jadwal berhasil ditambahkan ke Firestore.");
+            alert("Migrasi selesai! Refresh halaman untuk melihat hasilnya.");
+        } catch (err) {
+            console.error("❌ Migrasi gagal:", err);
+            alert("Migrasi gagal, cek Console (F12) untuk detail errornya. Kemungkinan besar Security Rules belum mengizinkan 'write' untuk migrasi ini.");
+        }
+    }
+
+    // =========================================================
     // ====== SINKRONISASI OTOMATIS DARI FIRESTORE (BERITA & JADWAL) ==
     // =========================================================
     // Fungsi ini "mendengarkan" (listen) koleksi Firestore secara live.
