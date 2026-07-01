@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup 2026 Bracket Simulator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+
+    <!-- ====== FIREBASE SDK (compat version — paling mudah untuk pemula) ====== -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            background-image: url('https://i.postimg.cc/s2P3WJ4S/Desain-tanpa-judul.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            --box-bg: white;
+            --box-border: white;
+            --line-color: white;
+            --text-main: black;
+            --text-muted: white;
+            --accent: #d4af37;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Russo One', sans-serif;
+            overflow: hidden; /* Fit to screen */
+            user-select: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- VIEW CONTROLLERS --- */
+        .view-section {
+            display: none;
+            width: 100vw; height: 100vh;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .view-active { display: flex; }
+
+        /* --- LANDING PAGE --- */
+        .landing-box {
+            background: var(--box-bg);
+            border: 1px solid var(--box-border);
+            padding: 4vh 3vw; border-radius: 12px;
+            text-align: center; box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        .landing-box h1 { margin-top: 0; color: var(--accent); font-weight: normal; }
+        .landing-box p { color: var(--text-muted); font-size: 0.9vw; }
+        .landing-box input {
+            padding: 1.5vh 1vw; font-size: 1vw;
+            border-radius: 6px; border: 1px solid #555;
+            background: #111; color: white;
+            width: 80%; margin-bottom: 2vh; text-align: center;
+            font-family: 'Russo One', sans-serif;
+        }
+        .btn {
+            background: var(--accent); color: #000;
+            border: none; padding: 1.5vh 2vw;
+            font-size: 1vw;
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
+            font-family: 'Russo One', sans-serif;
+        }
+        .btn:hover { background: #b5952f; transform: scale(1.05); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* Tombol sekunder (Random, Back, dll) */
+        .btn-secondary {
+            background: #444; color: white;
+        }
+        .btn-secondary:hover { background: #555; }
+
+        /* --- BRACKET PAGE --- */
+        #bracket-container {
+            display: flex; width: 98vw; height: 90vh;
+            margin: 0 1vw; justify-content: center;
+            align-items: stretch; gap: 1.5vw;
+        }
+        .column {
+            display: flex; flex-direction: column;
+            justify-content: space-around; flex: 1; position: relative;
+        }
+        .center-col {
+            flex: 1.2; align-items: center; justify-content: center; gap: 1.5vh;
+        }
+        .match-box {
+            background-color: var(--box-bg); border: 1px solid var(--box-border);
+            border-radius: 8px; padding: 1vh 0.4vw; display: flex; flex-direction: column;
+            align-items: center; position: relative; width: 8.5vw; margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 2;
+        }
+        .teams-row {
+            display: flex; justify-content: space-between; width: 100%; margin-bottom: 0;
+        }
+        .team-slot {
+            display: flex; flex-direction: column; align-items: center;
+            width: 45%; padding: 0.4vh 0; border-radius: 4px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .team-slot.clickable:hover { background-color: #333; }
+        .flag {
+            width: 2.5vw; height: 1.8vw; object-fit: cover; border-radius: 3px;
+            margin-bottom: 0.4vh; background-color: #111; border: 1px solid #333;
+        }
+        .tbd-flag {
+            width: 2.5vw; height: 1.8vw; background-color: #333; border-radius: 3px;
+            margin-bottom: 0.4vh; display: flex; align-items: center; justify-content: center;
+            border: 1px solid #444; font-size: 0.8vw; color: #666;
+        }
+        .code { font-size: 0.8vw; letter-spacing: 1px; }
+
+        /* BRACKET LINES */
+        .bracket-left::before {
+            content: ''; position: absolute; left: -1.2vw; top: 50%; transform: translateY(-50%);
+            width: 1.2vw; height: var(--bracket-height); border-left: 2px solid var(--line-color);
+            border-top: 2px solid var(--line-color); border-bottom: 2px solid var(--line-color);
+            border-radius: 4px 0 0 4px; z-index: -1;
+        }
+        .bracket-left::after {
+            content: ''; position: absolute; left: -0.5vw; top: 50%; width: 0.5vw; border-top: 2px solid var(--line-color); z-index: -1;
+        }
+        .bracket-right::before {
+            content: ''; position: absolute; right: -1.2vw; top: 50%; transform: translateY(-50%);
+            width: 1.2vw; height: var(--bracket-height); border-right: 2px solid var(--line-color);
+            border-top: 2px solid var(--line-color); border-bottom: 2px solid var(--line-color);
+            border-radius: 0 4px 4px 0; z-index: -1;
+        }
+        .bracket-right::after {
+            content: ''; position: absolute; right: -0.5vw; top: 50%; width: 0.5vw; border-top: 2px solid var(--line-color); z-index: -1;
+        }
+        .final-match::before { content: ''; position: absolute; left: -1.5vw; top: 50%; width: 1.5vw; border-top: 2px solid var(--line-color); z-index: -1; }
+        .final-match::after { content: ''; position: absolute; right: -1.5vw; top: 50%; width: 1.5vw; border-top: 2px solid var(--line-color); z-index: -1; }
+
+        /* CENTER STYLES & CHAMPION */
+        .trophy-container { text-align: center; margin-bottom: 1vh; }
+        .trophy-icon { font-size: 3vw; margin-bottom: 0.5vh; color: var(--accent); }
+        .trophy-title { font-size: 0.8vw; letter-spacing: 2px; color: var(--accent); }
+
+        .champion-box {
+            background-color: #2b2511; border: 2px solid var(--accent);
+            border-radius: 8px; padding: 1vh 1vw; display: flex; flex-direction: column;
+            align-items: center; width: 6vw; margin: 0 auto 1vh auto;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); z-index: 2; cursor: pointer; transition: 0.3s;
+        }
+        .champion-box:hover { background-color: #3b3218; }
+        .champion-box .flag { width: 3vw; height: 2.2vw; }
+        .champion-box .code { font-size: 1vw; color: var(--accent); }
+
+        .bronze-badge { background-color: #296096; color: white; font-size: 0.6vw; padding: 2px 6px; border-radius: 4px; margin-top: 6px; }
+        .final-badge { background-color: #d4af37; color: black; font-size: 0.6vw; padding: 2px 6px; border-radius: 4px; margin-top: 6px; }
+
+        /* ACTION BUTTONS (BOTTOM) */
+        #action-btn-container, .action-btn-container {
+            height: 10vh; display: flex; align-items: center; justify-content: center; gap: 1.5vw; width: 100%;
+        }
+        #btn-submit { display: none; } /* Muncul jika bracket selesai */
+
+        /* --- RESULTS PAGE (Dashboard mode: hide "your bracket" specific elements) --- */
+        .results-container.dashboard-mode .results-header,
+        .results-container.dashboard-mode #btn-edit-prediksi,
+        .results-container.dashboard-mode .btn-share {
+            display: none;
+        }
+
+        /* --- RESULTS PAGE --- */
+        .results-container {
+            background: var(--box-bg); border: 1px solid var(--box-border);
+            width: 60vw; height: 85vh; border-radius: 12px; padding: 3vh;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .results-header {
+            text-align: center; border-bottom: 1px solid #444; padding-bottom: 2vh; margin-bottom: 2vh;
+        }
+        .results-header h2 { font-weight: normal; margin-top: 0; }
+        .popularity-stat {
+            font-size: 3vw; color: var(--accent); margin: 1vh 0;
+        }
+        .logic-explanation {
+            font-size: 0.7vw; color: var(--text-muted); background: #111; padding: 1.5vh; border-radius: 6px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .leaderboard {
+            flex: 1; overflow-y: auto; padding-right: 1vw; margin-bottom: 2vh;
+        }
+        .leaderboard-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: white; padding: 1.5vh 1vw; border-radius: 8px; margin-bottom: 1vh;
+            font-size: 0.9vw;
+        }
+        .leaderboard-item img { width: 2vw; height: 1.5vw; margin-right: 1vw; vertical-align: middle; border-radius: 2px;}
+
+        .btn-restart {
+            width: 100%; text-align: center; margin-top: auto;
+        }
+
+        /* --- DROPDOWN MENU --- */
+        #team-dropdown {
+            display: none; position: absolute; background: white; border: 1px solid white;
+            border-radius: 6px; padding: 0.5vh; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            flex-direction: column; gap: 0.9vh;
+        }
+        .dropdown-item {
+            display: flex; align-items: center; gap: 0.5vw; padding: 0.5vh 0.5vw; cursor: pointer; border-radius: 4px; transition: background 0.2s;
+        }
+        .dropdown-item:hover { background: #444; }
+        .dropdown-item img { width: 2.5vw; height: 1.8vw; object-fit: cover; border-radius: 2px; }
+        .dropdown-item span { font-size: 0.9vw; }
+
+        /* --- BACKDROP UNTUK DROPDOWN MODE MOBILE --- */
+        #dropdown-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999;
+        }
+        #dropdown-backdrop.active { display: block; }
+
+        /* Saat dropdown ditampilkan sebagai bottom-sheet di mobile */
+        #team-dropdown.mobile-modal {
+            position: fixed !important; left: 50% !important; top: auto !important; bottom: 0 !important;
+            transform: translateX(-50%); width: 92vw; max-width: 420px;
+            border-radius: 16px 16px 0 0 !important; padding: 14px !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        /* Status kecil koneksi Firebase */
+        #fb-status {
+            position: fixed; bottom: 8px; right: 12px; font-size: 11px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #aaa; z-index: 9999;
+        }
+
+        /* --- DONATION BUTTON (Saweria) --- */
+        .btn-restart {
+            display: flex; gap: 1vw; justify-content: center; align-items: center; flex-wrap: wrap;
+        }
+        .btn-donate {
+            background: #FF6B35; color: white; border: none;
+            padding: 1.5vh 2vw; font-size: 1vw; border-radius: 6px;
+            cursor: pointer; transition: 0.2s; text-decoration: none;
+            font-family: 'Russo One', sans-serif; display: inline-flex;
+            align-items: center; gap: 0.5vw;
+        }
+        .btn-donate:hover { background: #e55a24; transform: scale(1.05); }
+
+        /* --- PRIVACY POLICY PAGE --- */
+        .privacy-container {
+            background: var(--box-bg); border: 1px solid var(--box-border);
+            width: 55vw; height: 85vh; border-radius: 12px; padding: 3vh 3vw;
+            display: flex; flex-direction: column; color: #111;
+        }
+        .privacy-container h2 { color: var(--accent); margin-top: 0; font-weight: normal; }
+        .privacy-body {
+            flex: 1; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.95vw; line-height: 1.6; padding-right: 1vw; text-align: left;
+        }
+        .privacy-body h3 { color: #333; margin-bottom: 0.3em; }
+        .privacy-body p, .privacy-body li { color: #222; }
+        .privacy-footer { text-align: center; margin-top: 2vh; }
+        .privacy-link {
+            position: fixed; bottom: 10px; left: 12px; font-size: 11px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ccc; text-decoration: underline; cursor: pointer; z-index: 9999;
+        }
+        .privacy-link:hover { color: white; }
+
+        /* --- THEME TOGGLE --- */
+        body.theme-light {
+            --box-bg: #eeeeee;
+            --box-border: #bbbbbb;
+            --line-color: #333333;
+            --text-main: #111111;
+            --text-muted: #333333;
+        }
+        .theme-toggle-btn {
+            position: fixed; top: 12px; right: 12px; z-index: 9999;
+            background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 50%; width: 38px; height: 38px; cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .theme-toggle-btn:hover { background: rgba(0,0,0,0.75); transform: scale(1.08); }
+
+        /* --- COUNTDOWN --- */
+        .countdown-box {
+            margin: 1.5vh 0; font-size: 0.85vw; color: #d4af37; background: #111;
+            padding: 1vh 1vw; border-radius: 6px; display: inline-block;
+        }
+
+        /* --- LOADING OVERLAY --- */
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 6000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.25);
+            border-top-color: var(--accent); border-radius: 50%; animation: wc-spin 0.8s linear infinite;
+        }
+        @keyframes wc-spin { to { transform: rotate(360deg); } }
+        .loading-text { color: white; font-family: 'Russo One', sans-serif; font-size: 14px; letter-spacing: 1px; }
+
+        /* --- POPULARITY CHART --- */
+        .popularity-chart { margin-bottom: 2vh; }
+        .chart-title { font-size: 0.85vw; color: var(--text-muted); margin-bottom: 1vh; }
+        .chart-row { display: flex; align-items: center; gap: 0.6vw; margin-bottom: 0.7vh; }
+        .chart-flag { width: 1.6vw; height: 1.2vw; object-fit: cover; border-radius: 2px; }
+        .chart-code { font-size: 0.75vw; width: 3vw; }
+        .chart-bar-track { flex: 1; background: #222; border-radius: 4px; height: 1vh; overflow: hidden; }
+        .chart-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s ease; }
+        .chart-count { font-size: 0.75vw; width: 2vw; text-align: right; color: var(--text-muted); }
+
+        /* --- EXTRA ACTION BUTTONS --- */
+        .btn-share {
+            background: #2b6ed4; color: white; border: none;
+            padding: 1.5vh 2vw; font-size: 1vw; border-radius: 6px;
+            cursor: pointer; transition: 0.2s; font-family: 'Russo One', sans-serif;
+        }
+        .btn-share:hover { background: #1f57ab; transform: scale(1.05); }
+
+        #bracket-scroll-hint { display: none; text-align: center; color: #ddd; font-size: 12px; margin-bottom: 6px; }
+
+        /* --- SCORE PREDICTION PAGE --- */
+        .scores-container {
+            background: var(--box-bg); border: 1px solid var(--box-border);
+            width: 80vw; height: 88vh; border-radius: 12px; padding: 2.5vh 2vw;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .scores-header { text-align: center; padding-bottom: 1.5vh; border-bottom: 1px solid #444; margin-bottom: 1.5vh; }
+        .scores-header h2 { margin: 0 0 0.5vh 0; font-weight: normal; color: var(--accent); font-size: 1.4vw; }
+        .scores-header p { margin: 0; color: var(--text-muted); font-size: 0.85vw; }
+        .scores-scroll { flex: 1; overflow-y: auto; padding-right: 0.8vw; }
+        .round-label {
+            font-size: 0.9vw; color: var(--accent); letter-spacing: 1.5px; margin: 2vh 0 1vh 0;
+            padding-bottom: 0.5vh; border-bottom: 1px solid #444;
+        }
+        .round-label:first-child { margin-top: 0; }
+        .score-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw;
+        }
+        .score-box {
+            background: #1c1c1c; border: 1px solid #333; border-radius: 8px;
+            padding: 1.2vh 0.8vw; display: flex; align-items: center; justify-content: space-between;
+            gap: 0.5vw;
+        }
+        body.theme-light .score-box { background: #f5f5f5; border: 1px solid #ccc; }
+        .score-box .sb-team { display: flex; flex-direction: column; align-items: center; width: 32%; }
+        .score-box .flag { width: 2.2vw; height: 1.6vw; margin-bottom: 0.3vh; }
+        .score-box .code { font-size: 0.75vw; color: #ffffff; }
+        body.theme-light .score-box .code { color: #1a1a1a; }
+        .dice-btn {
+            position: absolute; top: -0.7vh; left: -0.7vh; background: var(--accent); color: #000;
+            border: none; width: 1.8vw; height: 1.8vw; min-width: 22px; min-height: 22px; border-radius: 50%;
+            cursor: pointer; font-size: 0.9vw; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4); transition: 0.2s; z-index: 3;
+        }
+        .dice-btn:hover { transform: scale(1.15) rotate(15deg); }
+        .btn-randomize-all {
+            background: #6a3fb5; color: white; border: none;
+            padding: 1.5vh 2vw; font-size: 1vw; border-radius: 6px;
+            cursor: pointer; transition: 0.2s; font-family: 'Russo One', sans-serif;
+        }
+        .btn-randomize-all:hover { background: #55329f; transform: scale(1.05); }
+        .score-box .sb-score { display: flex; align-items: center; gap: 0.3vw; }
+        .score-box input[type="number"] {
+            width: 2.2vw; text-align: center; font-family: 'Russo One', sans-serif;
+            font-size: 1vw; padding: 0.6vh 0; border-radius: 5px; border: 1px solid #555;
+            background: #111; color: white; -moz-appearance: textfield;
+        }
+        .score-box input[type="number"]::-webkit-outer-spin-button,
+        .score-box input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .score-box input[type="number"]:focus { outline: none; border-color: var(--accent); }
+        .score-box input.filled { border-color: var(--accent); }
+        .score-dash { color: var(--text-muted); font-size: 1vw; }
+        .score-box.final-score { border: 1px solid var(--accent); background: #241f0c; }
+        body.theme-light .score-box.final-score { background: #fff6df; }
+
+        #btn-submit-scores { display: none; }
+
+        /* --- USER DETAIL MODAL (Lihat Prediksi Orang Lain) --- */
+        .btn-detail {
+            background: transparent; color: var(--accent); border: 1px solid var(--accent);
+            padding: 0.8vh 1vw; font-size: 0.75vw; border-radius: 6px; cursor: pointer;
+            font-family: 'Russo One', sans-serif; transition: 0.2s; margin-left: 1vw;
+        }
+        .btn-detail:hover { background: var(--accent); color: #000; }
+        .btn-share-mini {
+            background: transparent; color: #4d8fe0; border: 1px solid #4d8fe0;
+            padding: 0.8vh 1vw; font-size: 0.75vw; border-radius: 6px; cursor: pointer;
+            font-family: 'Russo One', sans-serif; transition: 0.2s; margin-left: 0.6vw;
+        }
+        .btn-share-mini:hover { background: #4d8fe0; color: #fff; }
+        @media (max-width: 820px) {
+            .btn-detail, .btn-share-mini { padding: 6px 10px; font-size: 11px; margin-left: 6px; }
+        }
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            z-index: 8000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--box-bg); color: var(--text-main); width: 78vw; max-width: 1000px;
+            height: 82vh; overflow-y: auto; border-radius: 12px; padding: 2.5vh 2vw; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 1.5vh; right: 1.5vh; background: #444; color: white;
+            border: none; width: 2vw; height: 2vw; min-width: 28px; min-height: 28px; border-radius: 50%;
+            cursor: pointer; font-size: 0.9vw; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: #666; }
+        .modal-header { text-align: center; margin-bottom: 1.5vh; }
+        .modal-header h2 { margin: 0 0 0.5vh 0; color: var(--accent); font-weight: normal; font-size: 1.3vw; }
+        .modal-champion { display: flex; align-items: center; justify-content: center; gap: 0.6vw; margin-top: 1vh; }
+        .modal-champion img { width: 3vw; height: 2.2vw; border-radius: 3px; }
+        .modal-champion span { font-size: 1.1vw; color: var(--accent); }
+        .score-box.readonly { cursor: default; }
+        .score-box .sb-score-text {
+            font-size: 1vw; background: #111; color: white; padding: 0.6vh 0.8vw; border-radius: 5px;
+            border: 1px solid #555; min-width: 3.5vw; text-align: center;
+        }
+        body.theme-light .score-box .sb-score-text { background: #111; }
+
+        @media (max-width: 820px) {
+            .scores-container { width: 94vw !important; height: 88vh !important; padding: 16px !important; box-sizing: border-box; }
+            .scores-header h2 { font-size: 17px !important; }
+            .scores-header p { font-size: 12px !important; }
+            .round-label { font-size: 12px !important; }
+            .score-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+            .score-box { padding: 10px 6px !important; }
+            .score-box .flag { width: 26px !important; height: 19px !important; }
+            .score-box .code { font-size: 10px !important; }
+            .score-box input[type="number"] { width: 32px !important; font-size: 14px !important; padding: 6px 0 !important; }
+            .score-dash { font-size: 13px !important; }
+            .btn-detail { font-size: 11px !important; padding: 8px 10px !important; margin-left: 0 !important; margin-top: 6px !important; }
+            .modal-content { width: 94vw !important; height: 88vh !important; padding: 16px !important; box-sizing: border-box; }
+            .modal-header h2 { font-size: 15px !important; }
+            .modal-champion img { width: 36px !important; height: 26px !important; }
+            .modal-champion span { font-size: 14px !important; }
+            .modal-close { width: 30px !important; height: 30px !important; font-size: 13px !important; }
+            .score-box .sb-score-text { font-size: 12px !important; padding: 6px 8px !important; min-width: 30px !important; }
+            .dice-btn { width: 22px !important; height: 22px !important; font-size: 12px !important; top: -6px !important; left: -6px !important; }
+            .btn-randomize-all { font-size: 13px !important; padding: 12px 16px !important; }
+        }
+
+        /* ================= MOBILE RESPONSIVE ================= */
+        @media (max-width: 820px) {
+            body, html { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh; }
+            .view-section { height: auto !important; min-height: 100vh; padding: 4vh 0; box-sizing: border-box; }
+
+            .landing-box { width: 88vw !important; padding: 30px 20px !important; box-sizing: border-box; }
+            .landing-box h1 { font-size: 20px !important; }
+            .landing-box p { font-size: 13px !important; }
+            .landing-box input { font-size: 15px !important; padding: 12px !important; width: 100% !important; box-sizing: border-box; }
+            .countdown-box { font-size: 12px !important; }
+
+            .btn, .btn-secondary, .btn-donate, .btn-share { font-size: 13px !important; padding: 12px 16px !important; }
+            .theme-toggle-btn { width: 34px !important; height: 34px !important; top: 8px !important; right: 8px !important; }
+
+            #bracket-scroll-hint { display: block !important; }
+            #bracket-container {
+                width: 100vw !important; height: auto !important;
+                overflow-x: auto !important; overflow-y: hidden !important;
+                justify-content: flex-start !important; align-items: center !important;
+                padding: 10px 16px !important; gap: 26px !important; box-sizing: border-box;
+                -webkit-overflow-scrolling: touch;
+            }
+            .column { min-width: 100px !important; flex: none !important; gap: 12px !important; }
+            .center-col { min-width: 130px !important; }
+            .match-box { width: 92px !important; padding: 8px 4px !important; }
+            .flag, .tbd-flag { width: 28px !important; height: 20px !important; font-size: 10px !important; }
+            .code { font-size: 10px !important; }
+            .trophy-container img { width: 40px !important; }
+            .trophy-container div { font-size: 9px !important; }
+            .champion-box { width: 64px !important; }
+            .champion-box .flag { width: 30px !important; height: 22px !important; }
+            .champion-box .code { font-size: 11px !important; }
+            .bronze-badge, .final-badge { font-size: 9px !important; }
+
+            #action-btn-container, .action-btn-container { height: auto !important; flex-wrap: wrap !important; padding: 14px 0 !important; gap: 10px !important; }
+
+            .results-container, .privacy-container { width: 92vw !important; height: 88vh !important; padding: 18px !important; box-sizing: border-box; }
+            .results-header h2 { font-size: 17px !important; }
+            .popularity-stat { font-size: 32px !important; }
+            .logic-explanation { font-size: 11px !important; }
+            .chart-title, .chart-code, .chart-count { font-size: 10px !important; }
+            .chart-flag { width: 20px !important; height: 15px !important; }
+            .leaderboard-item { font-size: 12px !important; padding: 10px !important; flex-wrap: wrap !important; gap: 6px; }
+            .leaderboard-item img { width: 20px !important; height: 15px !important; }
+            .privacy-body { font-size: 13px !important; }
+            .btn-restart { flex-direction: column !important; }
+
+            /* Dropdown pilih negara: perbesar biar tidak perlu zoom */
+            .dropdown-item { padding: 12px 14px !important; gap: 12px !important; border-radius: 8px !important; }
+            .dropdown-item img { width: 40px !important; height: 30px !important; }
+            .dropdown-item span { font-size: 16px !important; }
+            #team-dropdown { gap: 10px !important; padding: 12px !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="view-landing" class="view-section view-active">
+    <div class="landing-box">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/2026_FIFA_World_Cup_emblem.svg/960px-2026_FIFA_World_Cup_emblem.svg.png?_=20260317182607" alt="Custom Logo" width="80" style="margin-bottom: 20px;">
+
+        <h1>WORLD CUP 2026 PREDICTION</h1>
+        <p style="color: black;">Input Your Username First</p>
+
+        <input type="text" id="username-input" placeholder="Ex: alan96">
+        <br>
+        <div id="countdown-box" class="countdown-box"></div>
+        <br>
+        <button class="btn" onclick="startPrediction()">Start Prediction</button>
+        <br>
+        <button class="btn btn-secondary" style="margin-top: 1.5vh;" onclick="viewDashboard()">View Prediction Dashboard</button>
+    </div>
+</div>
+
+<div id="view-bracket" class="view-section">
+    <div id="bracket-scroll-hint">⇠ Swipe left/right to view the full bracket ⇢</div>
+    <div id="bracket-container"></div>
+    <div id="action-btn-container">
+        <button class="btn btn-secondary" onclick="randomizeBracket()">Random Prediction</button>
+        <button id="btn-submit" class="btn" onclick="goToScorePrediction()">Continue to Score Prediction →</button>
+    </div>
+</div>
+
+<div id="view-scores" class="view-section">
+    <div class="scores-container">
+        <div class="scores-header">
+            <h2>Match Score Prediction</h2>
+            <p>Isi tebakan skor untuk seluruh 32 pertandingan di bracket kamu sebelum submit</p>
+        </div>
+        <div class="scores-scroll" id="scores-scroll"></div>
+    </div>
+    <div id="scores-action-btn-container" class="action-btn-container">
+        <button class="btn btn-secondary" onclick="switchView('view-bracket'); renderBracket();">← Back To Bracket</button>
+        <button class="btn-randomize-all" onclick="randomizeAllScores()">🎲 Randomize All Scores</button>
+        <button id="btn-submit-scores" class="btn" onclick="submitPrediction()">Submit Prediction</button>
+    </div>
+</div>
+
+<div id="view-results" class="view-section">
+    <div class="results-container">
+        <div class="results-header">
+            <h2>Prediction Statistics</h2>
+            <div class="popularity-stat" id="pop-stat">0%</div>
+            <p>Someone made the <span style="color: var(--accent);">exact same</span> bracket as you</p>
+            <div class="logic-explanation">
+                ℹ️ The closer it is to 100%, the more your bracket prediction aligns with the majority's choice.
+            </div>
+        </div>
+        <div id="popularity-chart" class="popularity-chart"></div>
+        <h3 style="font-weight: normal; margin-top: 0;">Other Users' Predictions</h3>
+        <div class="leaderboard" id="leaderboard-list"></div>
+        <div class="btn-restart">
+            <button id="btn-edit-prediksi" class="btn btn-secondary" onclick="editPrediction()">✏️ Edit Prediksi</button>
+            <button id="btn-submit-another" class="btn btn-secondary" onclick="resetToHome()">Submit Another</button>
+            <button class="btn-share" onclick="shareResult()">🔗 Bagikan</button>
+            <a class="btn-donate" href="https://saweria.co/Alanmjd" target="_blank" rel="noopener noreferrer">☕ Donasi Saweria</a>
+        </div>
+    </div>
+</div>
+
+<div id="view-privacy" class="view-section">
+    <div class="privacy-container">
+        <h2>Privacy Policy</h2>
+        <div class="privacy-body">
+            <p><em>Terakhir diperbarui: <span id="privacy-date"></span></em></p>
+
+            <h3>1. Informasi yang Kami Kumpulkan</h3>
+            <p>Saat kamu menggunakan World Cup 2026 Bracket Simulator, kami mengumpulkan:</p>
+            <ul>
+                <li><strong>Username</strong> yang kamu masukkan sendiri di halaman awal (bukan nama asli, boleh diisi bebas/nickname).</li>
+                <li><strong>Prediksi bracket</strong> yang kamu buat, termasuk pilihan pemenang tiap pertandingan dan juara akhir.</li>
+                <li><strong>Waktu pengiriman</strong> prediksi (timestamp) untuk keperluan statistik.</li>
+            </ul>
+            <p>Kami <strong>tidak</strong> mengumpulkan alamat email, nomor telepon, lokasi presisi, atau data pribadi sensitif lainnya.</p>
+
+            <h3>2. Bagaimana Kami Menggunakan Data</h3>
+            <p>Data prediksi yang kamu kirim digunakan untuk:</p>
+            <ul>
+                <li>Menampilkan statistik popularitas bracket (persentase kecocokan dengan pengguna lain).</li>
+                <li>Menampilkan daftar prediksi pengguna lain (leaderboard) secara publik di halaman hasil.</li>
+            </ul>
+            <p>Karena leaderboard bersifat publik, username dan pilihan juaramu akan terlihat oleh pengguna lain. Jangan gunakan nama asli atau informasi pribadi sebagai username.</p>
+
+            <h3>3. Penyimpanan Data</h3>
+            <p>Data disimpan menggunakan layanan <strong>Google Firebase (Cloud Firestore)</strong>. Data dapat disimpan dalam jangka waktu tidak terbatas untuk keperluan statistik, kecuali diminta untuk dihapus.</p>
+
+            <h3>4. Pihak Ketiga</h3>
+            <p>Situs ini menggunakan layanan pihak ketiga berikut:</p>
+            <ul>
+                <li><strong>Google Firebase</strong> — untuk penyimpanan data prediksi.</li>
+                <li><strong>Google Fonts</strong> — untuk menampilkan tipografi halaman.</li>
+                <li><strong>FlagCDN</strong> — untuk menampilkan gambar bendera negara.</li>
+                <li><strong>Saweria</strong> — jika kamu memilih untuk memberikan donasi melalui tombol donasi, kamu akan diarahkan ke situs Saweria yang memiliki kebijakan privasinya sendiri.</li>
+            </ul>
+
+            <h3>5. Cookie</h3>
+            <p>Situs ini tidak menggunakan cookie pelacakan pihak ketiga untuk iklan. Data yang tersimpan hanya digunakan untuk fungsi inti aplikasi (menyimpan dan menampilkan prediksi).</p>
+
+            <h3>6. Hak Pengguna</h3>
+            <p>Jika kamu ingin data prediksimu dihapus dari database, silakan hubungi pengelola situs melalui kontak yang tersedia.</p>
+
+            <h3>7. Perubahan Kebijakan</h3>
+            <p>Kebijakan privasi ini dapat diperbarui sewaktu-waktu. Perubahan akan langsung berlaku setelah dipublikasikan di halaman ini.</p>
+        </div>
+        <div class="privacy-footer">
+            <button class="btn btn-secondary" onclick="switchView('view-landing')">Kembali</button>
+        </div>
+    </div>
+</div>
+
+<div class="privacy-link" onclick="openPrivacyPolicy()">Privacy Policy</div>
+
+<div id="user-detail-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeUserDetail()">✕</button>
+        <div id="user-detail-body"></div>
+    </div>
+</div>
+
+<div id="dropdown-backdrop" onclick="closeDropdown()"></div>
+<div id="team-dropdown"></div>
+<div id="fb-status">Menghubungkan ke database...</div>
+<button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" title="Ganti Tema">🌙</button>
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Menyimpan prediksi...</div>
+</div>
+
+<script>
+    // =========================================================
+    // ====== 1. KONFIGURASI FIREBASE — GANTI DENGAN MILIKMU =====
+    // =========================================================
+    // Ambil nilai ini dari Firebase Console:
+    // Project settings -> General -> Your apps -> SDK setup and configuration
+    const firebaseConfig = {
+         apiKey: "AIzaSyAaj8KhvfLLkvobQPKoLO5jn5cEMTmBYac",
+  authDomain: "wc2026-bracket-909ec.firebaseapp.com",
+  projectId: "wc2026-bracket-909ec",
+  storageBucket: "wc2026-bracket-909ec.firebasestorage.app",
+  messagingSenderId: "128381346681",
+  appId: "1:128381346681:web:44555576e6a50e65e045a8",
+  measurementId: "G-WRD3QFFCCQ"
+};
+
+    let db = null;
+    let firebaseReady = false;
+
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseReady = firebaseConfig.apiKey !== "GANTI_DENGAN_API_KEY_KAMU";
+    } catch (e) {
+        console.error("Firebase init error:", e);
+    }
+
+    const fbStatusEl = document.getElementById('fb-status');
+    if (!firebaseReady) {
+        fbStatusEl.innerText = "⚠️ Firebase belum dikonfigurasi (lihat firebaseConfig di kode)";
+        fbStatusEl.style.color = "#e07a7a";
+    } else {
+        fbStatusEl.innerText = "✅ Terhubung ke database";
+        setTimeout(() => { fbStatusEl.style.display = 'none'; }, 3000);
+    }
+
+    let currentUser = "";
+    let currentPredictionDocId = null; // dipakai untuk fitur Edit Prediksi (update, bukan add baru)
+
+    // --- THEME TOGGLE ---
+    function toggleTheme() {
+        document.body.classList.toggle('theme-light');
+        const isLight = document.body.classList.contains('theme-light');
+        localStorage.setItem('wc2026_theme', isLight ? 'light' : 'dark');
+        document.getElementById('theme-toggle-btn').innerText = isLight ? '☀️' : '🌙';
+    }
+    (function initTheme() {
+        const saved = localStorage.getItem('wc2026_theme');
+        if (saved === 'light') {
+            document.body.classList.add('theme-light');
+            const btn = document.getElementById('theme-toggle-btn');
+            if (btn) btn.innerText = '☀️';
+        }
+    })();
+
+    // --- COUNTDOWN KE FINAL ---
+    const TOURNAMENT_FINAL = new Date('2026-07-19T18:00:00');
+    function updateCountdown() {
+        const el = document.getElementById('countdown-box');
+        if (!el) return;
+        const diff = TOURNAMENT_FINAL - new Date();
+        if (diff <= 0) {
+            el.innerText = "🏆 Turnamen telah berakhir!";
+            return;
+        }
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / (1000 * 60)) % 60);
+        el.innerText = `⏳ ${d}d ${h}h ${m}m To`;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+
+    // --- LOADING OVERLAY HELPER ---
+    function showLoading(text) {
+        const el = document.getElementById('loading-overlay');
+        const txt = document.getElementById('loading-text');
+        if (txt) txt.innerText = text || 'Memproses...';
+        if (el) el.classList.add('active');
+    }
+    function hideLoading() {
+        const el = document.getElementById('loading-overlay');
+        if (el) el.classList.remove('active');
+    }
+
+    // API Bendera
+    const flags = {
+        'GER':'de', 'PAR':'py', 'FRA':'fr', 'SWE':'se', 'RSA':'za', 'CAN':'ca', 'NED':'nl', 'MAR':'ma',
+        'POR':'pt', 'CRO':'hr', 'ESP':'es', 'AUT':'at', 'USA':'us', 'BIH':'ba', 'BEL':'be', 'SEN':'sn',
+        'BRA':'br', 'JPN':'jp', 'CIV':'ci', 'NOR':'no', 'MEX':'mx', 'ECU':'ec', 'ENG':'gb-eng', 'COD':'cd',
+        'ARG':'ar', 'CPV':'cv', 'AUS':'au', 'EGY':'eg', 'SUI':'ch', 'ALG':'dz', 'COL':'co', 'GHA':'gh'
+    };
+    const getFlagUrl = (code) => `https://flagcdn.com/w40/${flags[code]}.png`;
+
+    // Database Bracket Inti
+    const initialBracketData = () => ({
+        matches: {
+            'l32_1': { t1: 'GER', t2: 'PAR' }, 'l32_2': { t1: 'FRA', t2: 'SWE' },
+            'l32_3': { t1: 'RSA', t2: 'CAN' }, 'l32_4': { t1: 'NED', t2: 'MAR' },
+            'l32_5': { t1: 'POR', t2: 'CRO' }, 'l32_6': { t1: 'ESP', t2: 'AUT' },
+            'l32_7': { t1: 'USA', t2: 'BIH' }, 'l32_8': { t1: 'BEL', t2: 'SEN' },
+            'r32_1': { t1: 'BRA', t2: 'JPN' }, 'r32_2': { t1: 'CIV', t2: 'NOR' },
+            'r32_3': { t1: 'MEX', t2: 'ECU' }, 'r32_4': { t1: 'ENG', t2: 'COD' },
+            'r32_5': { t1: 'ARG', t2: 'CPV' }, 'r32_6': { t1: 'AUS', t2: 'EGY' },
+            'r32_7': { t1: 'SUI', t2: 'ALG' }, 'r32_8': { t1: 'COL', t2: 'GHA' },
+
+            'l16_1': { t1: null, t2: null, f1: 'l32_1', f2: 'l32_2' }, 'l16_2': { t1: null, t2: null, f1: 'l32_3', f2: 'l32_4' },
+            'l16_3': { t1: null, t2: null, f1: 'l32_5', f2: 'l32_6' }, 'l16_4': { t1: null, t2: null, f1: 'l32_7', f2: 'l32_8' },
+            'r16_1': { t1: null, t2: null, f1: 'r32_1', f2: 'r32_2' }, 'r16_2': { t1: null, t2: null, f1: 'r32_3', f2: 'r32_4' },
+            'r16_3': { t1: null, t2: null, f1: 'r32_5', f2: 'r32_6' }, 'r16_4': { t1: null, t2: null, f1: 'r32_7', f2: 'r32_8' },
+
+            'l8_1': { t1: null, t2: null, f1: 'l16_1', f2: 'l16_2' }, 'l8_2': { t1: null, t2: null, f1: 'l16_3', f2: 'l16_4' },
+            'r8_1': { t1: null, t2: null, f1: 'r16_1', f2: 'r16_2' }, 'r8_2': { t1: null, t2: null, f1: 'r16_3', f2: 'r16_4' },
+
+            'l4_1': { t1: null, t2: null, f1: 'l8_1', f2: 'l8_2' }, 'r4_1': { t1: null, t2: null, f1: 'r8_1', f2: 'r8_2' },
+
+            'final': { t1: null, t2: null, f1: 'l4_1', f2: 'r4_1' },
+            'bronze': { t1: null, t2: null, f1: 'l4_1', f2: 'r4_1' }
+        },
+        champion: null,
+        scores: {} // { matchId: { s1: '', s2: '' } } — diisi user di halaman prediksi skor
+    });
+
+    let bracketData = initialBracketData();
+
+    // Urutan & label ronde — dipakai untuk halaman skor & modal detail user lain
+    const ROUND_GROUPS = [
+        { label: 'The Round Of 32', ids: ['l32_1','l32_2','l32_3','l32_4','l32_5','l32_6','l32_7','l32_8','r32_1','r32_2','r32_3','r32_4','r32_5','r32_6','r32_7','r32_8'] },
+        { label: 'The Round Of 16', ids: ['l16_1','l16_2','l16_3','l16_4','r16_1','r16_2','r16_3','r16_4'] },
+        { label: 'Quarter Finals', ids: ['l8_1','l8_2','r8_1','r8_2'] },
+        { label: 'Semi final', ids: ['l4_1','r4_1'] },
+        { label: 'Final', ids: ['final'] },
+        { label: 'Fight For 3rd Place', ids: ['bronze'] }
+    ];
+
+    // 1. Fungsi Navigasi
+    function switchView(viewId) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('view-active'));
+        document.getElementById(viewId).classList.add('view-active');
+    }
+
+    function startPrediction() {
+        const input = document.getElementById('username-input').value;
+        if(!input.trim()) {
+            alert("enter your username first!");
+            return;
+        }
+        currentUser = input.trim();
+        switchView('view-bracket');
+        renderBracket();
+    }
+
+    function resetToHome() {
+        document.getElementById('username-input').value = "";
+        bracketData = initialBracketData();
+        currentPredictionDocId = null;
+        switchView('view-landing');
+        renderBracket();
+    }
+
+    // --- LIHAT DASHBOARD PREDIKSI LANGSUNG (tanpa perlu submit prediksi dulu) ---
+    async function viewDashboard() {
+        if (!firebaseReady || !db) {
+            alert("Firebase belum dikonfigurasi. Lihat bagian firebaseConfig di dalam kode.");
+            return;
+        }
+
+        showLoading("Memuat dashboard prediksi...");
+        try {
+            const snapshot = await db.collection('predictions')
+                .orderBy('createdAt', 'desc')
+                .limit(200)
+                .get();
+
+            const allPredictions = snapshot.docs.map(doc => ({ __id: doc.id, ...doc.data() }));
+            window.__allPredictions = allPredictions;
+
+            renderPopularityChart(allPredictions);
+
+            const leaderboardEl = document.getElementById('leaderboard-list');
+            leaderboardEl.innerHTML = "";
+
+            if (allPredictions.length === 0) {
+                leaderboardEl.innerHTML = "<p style='text-align:center;'>Belum ada prediksi yang masuk.</p>";
+            }
+
+            allPredictions.forEach((data, idx) => {
+                const isMe = data.username === currentUser ? "<span style='color: var(--accent);'> (You)</span>" : "";
+                leaderboardEl.innerHTML += `
+                    <div class="leaderboard-item" style="${isMe ? 'border: 1px solid #d4af37;' : ''}">
+                        <div><span>${data.username}</span> ${isMe}</div>
+                        <div style="display:flex; align-items:center;">
+                            <span>Winner: <img src="${getFlagUrl(data.champion)}"> <span>${data.champion}</span></span>
+                            <button class="btn-detail" onclick="showUserDetail(${idx})">View Bracket</button>
+                            <button class="btn-share-mini" onclick="shareUserResult(${idx})">🔗 Share</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const resultsContainer = document.querySelector('.results-container');
+            resultsContainer.classList.add('dashboard-mode');
+
+            const submitAnotherBtn = document.getElementById('btn-submit-another');
+            if (submitAnotherBtn) submitAnotherBtn.innerText = "🏆 Start Prediction";
+
+            switchView('view-results');
+        } catch (error) {
+            console.error("Gagal memuat dashboard:", error);
+            alert("Gagal memuat dashboard. Cek koneksi internet atau konfigurasi Firebase.");
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function editPrediction() {
+        // Kembali ke halaman bracket TANPA mereset pilihan yang sudah ada
+        switchView('view-bracket');
+        renderBracket();
+    }
+
+    function openPrivacyPolicy() {
+        const dateEl = document.getElementById('privacy-date');
+        if (dateEl) {
+            dateEl.innerText = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        switchView('view-privacy');
+    }
+
+    // 2. Render UI Bracket
+    function createMatchHTML(matchId, customClass = '', bracketHeight = '') {
+        const m = bracketData.matches[matchId];
+        const isClickable1 = m.f1 ? 'clickable' : '';
+        const isClickable2 = m.f2 ? 'clickable' : '';
+
+        const team1HTML = m.t1 ? `<img class="flag" src="${getFlagUrl(m.t1)}"><span class="code">${m.t1}</span>` : `<div class="tbd-flag">🛡️</div><span class="code">TBD</span>`;
+        const team2HTML = m.t2 ? `<img class="flag" src="${getFlagUrl(m.t2)}"><span class="code">${m.t2}</span>` : `<div class="tbd-flag">🛡️</div><span class="code">TBD</span>`;
+
+        const styleAttr = bracketHeight ? `style="--bracket-height: ${bracketHeight};"` : '';
+        let badgeHTML = '';
+        if(matchId === 'final') badgeHTML = `<div class="final-badge">FINAL</div>`;
+        if(matchId === 'bronze') badgeHTML = `<div class="bronze-badge">BRONZE</div>`;
+
+        return `
+            <div class="match-box ${customClass}" ${styleAttr}>
+                <div class="teams-row">
+                    <div class="team-slot ${isClickable1}" onclick="openDropdown('${matchId}', 't1', event)">${team1HTML}</div>
+                    <div class="team-slot ${isClickable2}" onclick="openDropdown('${matchId}', 't2', event)">${team2HTML}</div>
+                </div>
+                ${badgeHTML}
+            </div>
+        `;
+    }
+
+    function generateCol(matchIds, bracketClass = '', bracketHeight = '') {
+        return `<div class="column">` + matchIds.map(id => createMatchHTML(id, bracketClass, bracketHeight)).join('') + `</div>`;
+    }
+
+    function generateCenterCol() {
+        const champHTML = bracketData.champion
+            ? `<img class="flag" src="${getFlagUrl(bracketData.champion)}"><span class="code">${bracketData.champion}</span>`
+            : `<div class="tbd-flag" style="margin-bottom:0;">?</div>`;
+
+        return `
+            <div class="column center-col">
+                <div class="trophy-container">
+                    <div class="trophy-icon"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/2026_FIFA_World_Cup_emblem.svg/960px-2026_FIFA_World_Cup_emblem.svg.png?_=20260317182607"  alt="Custom Logo" width="80" style="margin-bottom: 3px;"></div>
+                    <div style="color: #FFD700; font-weight: bold;">FIFA WORLD CUP WINNER 2026</div>
+                </div>
+
+                <div class="champion-box" onclick="openChampionDropdown(event)">
+                    ${champHTML}
+                </div>
+
+                ${createMatchHTML('final', 'final-match')}
+                ${createMatchHTML('bronze')}
+            </div>
+        `;
+    }
+
+    function renderBracket() {
+        const html = [
+            generateCol(['l32_1', 'l32_2', 'l32_3', 'l32_4', 'l32_5', 'l32_6', 'l32_7', 'l32_8']),
+            generateCol(['l16_1', 'l16_2', 'l16_3', 'l16_4'], 'bracket-left', '11.5vh'),
+            generateCol(['l8_1', 'l8_2'], 'bracket-left', '23vh'),
+            generateCol(['l4_1'], 'bracket-left', '46vh'),
+            generateCenterCol(),
+            generateCol(['r4_1'], 'bracket-right', '46vh'),
+            generateCol(['r8_1', 'r8_2'], 'bracket-right', '23vh'),
+            generateCol(['r16_1', 'r16_2', 'r16_3', 'r16_4'], 'bracket-right', '11.5vh'),
+            generateCol(['r32_1', 'r32_2', 'r32_3', 'r32_4', 'r32_5', 'r32_6', 'r32_7', 'r32_8'])
+        ].join('');
+        document.getElementById('bracket-container').innerHTML = html;
+        checkIfComplete();
+    }
+
+    // 3. Logika Randomizer Bracket
+    function randomizeBracket() {
+        const roundSequence = [
+            ['l16_1', 'l16_2', 'l16_3', 'l16_4', 'r16_1', 'r16_2', 'r16_3', 'r16_4'],
+            ['l8_1', 'l8_2', 'r8_1', 'r8_2'],
+            ['l4_1', 'r4_1'],
+            ['final']
+        ];
+
+        roundSequence.forEach(round => {
+            round.forEach(matchId => {
+                const m = bracketData.matches[matchId];
+                const feeder1 = bracketData.matches[m.f1];
+                const feeder2 = bracketData.matches[m.f2];
+
+                m.t1 = Math.random() < 0.5 ? feeder1.t1 : feeder1.t2;
+                m.t2 = Math.random() < 0.5 ? feeder2.t1 : feeder2.t2;
+            });
+        });
+
+        const finalMatch = bracketData.matches['final'];
+        bracketData.champion = Math.random() < 0.5 ? finalMatch.t1 : finalMatch.t2;
+
+        const sfLeft = bracketData.matches['l4_1'];
+        const sfRight = bracketData.matches['r4_1'];
+
+        bracketData.matches['bronze'].t1 = (sfLeft.t1 === finalMatch.t1) ? sfLeft.t2 : sfLeft.t1;
+        bracketData.matches['bronze'].t2 = (sfRight.t1 === finalMatch.t2) ? sfRight.t2 : sfRight.t1;
+
+        renderBracket();
+    }
+
+    // 4. Logika Interaksi Dropdown User
+    function openDropdown(matchId, slot, event) {
+        event.stopPropagation();
+        const match = bracketData.matches[matchId];
+        if(!match.f1 || !match.f2) return;
+
+        const feederMatch = bracketData.matches[slot === 't1' ? match.f1 : match.f2];
+        if (!feederMatch.t1 || !feederMatch.t2) return;
+
+        showDropdownMenu(event, matchId, slot, feederMatch.t1, feederMatch.t2);
+    }
+
+    function openChampionDropdown(event) {
+        event.stopPropagation();
+        const finalMatch = bracketData.matches['final'];
+        if (!finalMatch.t1 || !finalMatch.t2) return;
+        showDropdownMenu(event, 'CHAMPION', null, finalMatch.t1, finalMatch.t2);
+    }
+
+    function showDropdownMenu(event, matchId, slot, teamA, teamB) {
+        const dropdown = document.getElementById('team-dropdown');
+        const backdrop = document.getElementById('dropdown-backdrop');
+        dropdown.innerHTML = `
+            <div class="dropdown-item" onclick="selectTeam('${matchId}', '${slot}', '${teamA}')">
+                <img src="${getFlagUrl(teamA)}"> <span>${teamA}</span>
+            </div>
+            <div class="dropdown-item" onclick="selectTeam('${matchId}', '${slot}', '${teamB}')">
+                <img src="${getFlagUrl(teamB)}"> <span>${teamB}</span>
+            </div>
+        `;
+        dropdown.style.display = 'flex';
+
+        const isMobile = window.matchMedia('(max-width: 820px)').matches;
+        if (isMobile) {
+            // Di mobile: tampil sebagai bottom-sheet besar & mudah disentuh, tidak nempel titik klik
+            dropdown.classList.add('mobile-modal');
+            dropdown.style.left = '';
+            dropdown.style.top = '';
+            backdrop.classList.add('active');
+        } else {
+            dropdown.classList.remove('mobile-modal');
+            backdrop.classList.remove('active');
+            dropdown.style.left = event.pageX + 15 + 'px';
+            dropdown.style.top = event.pageY + 'px';
+        }
+    }
+
+    function closeDropdown() {
+        document.getElementById('team-dropdown').style.display = 'none';
+        document.getElementById('dropdown-backdrop').classList.remove('active');
+    }
+
+    function selectTeam(matchId, slot, teamCode) {
+        if (matchId === 'CHAMPION') {
+            bracketData.champion = teamCode;
+        } else {
+            const oldTeam = bracketData.matches[matchId][slot];
+            bracketData.matches[matchId][slot] = teamCode;
+
+            if (oldTeam && oldTeam !== teamCode) clearDownstream(matchId, oldTeam);
+
+            if (matchId === 'final') {
+                const sfMatchId = slot === 't1' ? 'l4_1' : 'r4_1';
+                const sfMatch = bracketData.matches[sfMatchId];
+                bracketData.matches['bronze'][slot] = (sfMatch.t1 === teamCode) ? sfMatch.t2 : sfMatch.t1;
+
+                if(bracketData.champion === oldTeam) bracketData.champion = null;
+            }
+        }
+        closeDropdown();
+        renderBracket();
+    }
+
+    function clearDownstream(sourceMatchId, oldTeam) {
+        for (const id in bracketData.matches) {
+            const m = bracketData.matches[id];
+            if (m.f1 === sourceMatchId || m.f2 === sourceMatchId) {
+                if (m.t1 === oldTeam) { m.t1 = null; clearDownstream(id, oldTeam); delete bracketData.scores[id]; }
+                if (m.t2 === oldTeam) { m.t2 = null; clearDownstream(id, oldTeam); delete bracketData.scores[id]; }
+            }
+        }
+        if(bracketData.champion === oldTeam) bracketData.champion = null;
+    }
+
+    window.addEventListener('click', () => { closeDropdown(); });
+
+    function checkIfComplete() {
+        if (bracketData.champion) {
+            document.getElementById('btn-submit').style.display = 'block';
+        } else {
+            document.getElementById('btn-submit').style.display = 'none';
+        }
+    }
+
+    // =========================================================
+    // ====== HALAMAN PREDIKSI SKOR (32 pertandingan) ============
+    // =========================================================
+    function goToScorePrediction() {
+        if (!bracketData.champion) {
+            alert("Selesaikan dulu bracket sampai juara sebelum mengisi prediksi skor!");
+            return;
+        }
+        switchView('view-scores');
+        renderScoreBoxes();
+    }
+
+    // Membuat satu kotak skor. readOnly=true dipakai untuk modal "lihat prediksi orang lain".
+    function buildScoreBoxHTML(matchId, matches, scores, readOnly) {
+        const m = matches[matchId];
+        if (!m || !m.t1 || !m.t2) {
+            return `<div class="score-box"><div class="sb-team"><div class="tbd-flag">🛡️</div><span class="code">TBD</span></div><span class="score-dash">vs</span><div class="sb-team"><div class="tbd-flag">🛡️</div><span class="code">TBD</span></div></div>`;
+        }
+        const sc = (scores && scores[matchId]) ? scores[matchId] : { s1: '', s2: '' };
+        const specialClass = (matchId === 'final' || matchId === 'bronze') ? 'final-score' : '';
+        const badge = matchId === 'final' ? '<div class="final-badge">FINAL</div>' : (matchId === 'bronze' ? '<div class="bronze-badge">3rd Place</div>' : '');
+
+        const scoreHTML = readOnly
+            ? `<div class="sb-score">
+                    <div class="sb-score-text">${sc.s1 !== '' && sc.s1 !== undefined ? sc.s1 : '-'}</div>
+                    <span class="score-dash">-</span>
+                    <div class="sb-score-text">${sc.s2 !== '' && sc.s2 !== undefined ? sc.s2 : '-'}</div>
+               </div>`
+            : `<div class="sb-score">
+                    <input type="number" min="0" inputmode="numeric" class="${sc.s1 !== '' ? 'filled' : ''}" value="${sc.s1 !== undefined ? sc.s1 : ''}" oninput="updateScore('${matchId}','s1',this)">
+                    <span class="score-dash">-</span>
+                    <input type="number" min="0" inputmode="numeric" class="${sc.s2 !== '' ? 'filled' : ''}" value="${sc.s2 !== undefined ? sc.s2 : ''}" oninput="updateScore('${matchId}','s2',this)">
+               </div>`;
+
+        return `
+            <div class="score-box ${specialClass} ${readOnly ? 'readonly' : ''}" style="position:relative;">
+                ${badge}
+                ${readOnly ? '' : `<button class="dice-btn" title="Acak skor ini" onclick="randomizeOneScore('${matchId}')">🎲</button>`}
+                <div class="sb-team">
+                    <img class="flag" src="${getFlagUrl(m.t1)}"><span class="code">${m.t1}</span>
+                </div>
+                ${scoreHTML}
+                <div class="sb-team">
+                    <img class="flag" src="${getFlagUrl(m.t2)}"><span class="code">${m.t2}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderScoreBoxes() {
+        const container = document.getElementById('scores-scroll');
+        let html = '';
+        ROUND_GROUPS.forEach(group => {
+            html += `<div class="round-label">${group.label}</div><div class="score-grid">`;
+            group.ids.forEach(id => {
+                html += buildScoreBoxHTML(id, bracketData.matches, bracketData.scores, false);
+            });
+            html += `</div>`;
+        });
+        container.innerHTML = html;
+        checkScoresComplete();
+    }
+
+    function updateScore(matchId, slot, inputEl) {
+        if (!bracketData.scores[matchId]) bracketData.scores[matchId] = { s1: '', s2: '' };
+        let val = inputEl.value;
+        if (val !== '' ) val = Math.max(0, parseInt(val, 10) || 0);
+        bracketData.scores[matchId][slot] = val;
+        inputEl.value = val;
+        inputEl.classList.toggle('filled', val !== '');
+        checkScoresComplete();
+    }
+
+    function checkScoresComplete() {
+        const allIds = ROUND_GROUPS.flatMap(g => g.ids);
+        const complete = allIds.every(id => {
+            const sc = bracketData.scores[id];
+            return sc && sc.s1 !== '' && sc.s1 !== undefined && sc.s2 !== '' && sc.s2 !== undefined;
+        });
+        const btn = document.getElementById('btn-submit-scores');
+        if (btn) btn.style.display = complete ? 'block' : 'none';
+        return complete;
+    }
+
+    // =========================================================
+    // ====== RANDOM SKOR (statistik, bukan data pertandingan live)
+    // =========================================================
+    // Catatan: aplikasi ini berjalan penuh di browser (tanpa server sendiri),
+    // jadi kita tidak bisa mengambil hasil head-to-head asli secara live dari
+    // internet saat generate skor. Sebagai gantinya, skor dibuat "masuk akal"
+    // memakai estimasi kekuatan tim (kira-kira mengikuti performa umum tim
+    // nasional) + distribusi gol ala Poisson yang lazim dipakai untuk
+    // memodelkan skor sepak bola sungguhan.
+    const TEAM_STRENGTH = {
+        ARG: 95, BRA: 93, FRA: 92, ENG: 90, ESP: 89, GER: 88, POR: 87,
+        NED: 85, BEL: 83, CRO: 80, USA: 78, MAR: 78, COL: 77, MEX: 76,
+        JPN: 75, SUI: 74, SEN: 73, ECU: 70, EGY: 70, ALG: 70, CIV: 69,
+        GHA: 68, NOR: 68, AUT: 68, CAN: 67, AUS: 66, PAR: 64, SWE: 64,
+        RSA: 60, BIH: 58, COD: 58, CPV: 56
+    };
+
+    function poissonRandom(lambda) {
+        const L = Math.exp(-lambda);
+        let k = 0, p = 1;
+        do { k++; p *= Math.random(); } while (p > L);
+        return k - 1;
+    }
+
+    function expectedGoals(strA, strB) {
+        const diff = (strA - strB) / 25;
+        return Math.min(3.2, Math.max(0.4, 1.35 + diff * 0.55));
+    }
+
+    function generateRealisticScore(t1, t2, forcedWinner) {
+        const strA = TEAM_STRENGTH[t1] ?? 70;
+        const strB = TEAM_STRENGTH[t2] ?? 70;
+        let s1 = Math.min(6, poissonRandom(expectedGoals(strA, strB)));
+        let s2 = Math.min(6, poissonRandom(expectedGoals(strB, strA)));
+
+        // Kalau match ini punya pemenang yang sudah dipilih user di bracket,
+        // pastikan skor random tidak bertentangan (tim yang dipilih menang harus unggul).
+        if (forcedWinner === t1 && s1 <= s2) {
+            s1 = s2 + 1;
+            if (s1 > 6) { s1 = 6; s2 = 5; }
+        } else if (forcedWinner === t2 && s2 <= s1) {
+            s2 = s1 + 1;
+            if (s2 > 6) { s2 = 6; s1 = 5; }
+        }
+        return { s1, s2 };
+    }
+
+    // Cari pemenang yang sudah dipilih user di bracket untuk suatu matchId,
+    // dengan melihat tim mana dari match ini yang lanjut ke match berikutnya.
+    // Untuk 'final', pemenangnya adalah juara yang dipilih di champion-box.
+    // Untuk 'bronze', tidak ada pemenang yang dipilih user di bracket (biarkan random murni).
+    function getBracketPickedWinner(matchId) {
+        if (matchId === 'final') return bracketData.champion || null;
+        if (matchId === 'bronze') return null;
+
+        const m = bracketData.matches[matchId];
+        if (!m || !m.t1 || !m.t2) return null;
+
+        for (const nextId in bracketData.matches) {
+            const next = bracketData.matches[nextId];
+            if (!next) continue;
+            if (next.f1 === matchId && next.t1) return next.t1;
+            if (next.f2 === matchId && next.t2) return next.t2;
+        }
+        return null;
+    }
+
+    function randomizeOneScore(matchId) {
+        const m = bracketData.matches[matchId];
+        if (!m || !m.t1 || !m.t2) return;
+        const forcedWinner = getBracketPickedWinner(matchId);
+        const { s1, s2 } = generateRealisticScore(m.t1, m.t2, forcedWinner);
+        bracketData.scores[matchId] = { s1, s2 };
+        renderScoreBoxes();
+    }
+
+    function randomizeAllScores() {
+        ROUND_GROUPS.flatMap(g => g.ids).forEach(id => {
+            const m = bracketData.matches[id];
+            if (!m || !m.t1 || !m.t2) return;
+            const forcedWinner = getBracketPickedWinner(id);
+            const { s1, s2 } = generateRealisticScore(m.t1, m.t2, forcedWinner);
+            bracketData.scores[id] = { s1, s2 };
+        });
+        renderScoreBoxes();
+    }
+
+    // =========================================================
+    // ====== LIHAT PREDIKSI ORANG LAIN (bracket + skor) ==========
+    // =========================================================
+    // Bangun & tampilkan modal detail bracket dari sebuah objek data prediksi
+    function renderUserDetailModal(data) {
+        if (!data) return;
+        if (!data.matches) {
+            alert("Detail bracket untuk prediksi ini tidak tersedia (mungkin dibuat sebelum fitur ini ada).");
+            return;
+        }
+        const champ = data.champion;
+        let html = `
+            <div class="modal-header">
+                <h2>Prediksi ${data.username}</h2>
+                <div class="modal-champion">
+                    <img src="${getFlagUrl(champ)}"><span>WINNER: ${champ}</span>
+                </div>
+                <button class="btn-share-mini" style="margin-left:0; margin-top:1vh;" onclick='shareUserResultData(${JSON.stringify(data.username)}, ${JSON.stringify(champ)}, ${JSON.stringify(data.__id || "")})'>🔗 Share This Prediction</button>
+            </div>
+        `;
+        ROUND_GROUPS.forEach(group => {
+            html += `<div class="round-label">${group.label}</div><div class="score-grid">`;
+            group.ids.forEach(id => {
+                html += buildScoreBoxHTML(id, data.matches, data.scores || {}, true);
+            });
+            html += `</div>`;
+        });
+        document.getElementById('user-detail-body').innerHTML = html;
+        document.getElementById('user-detail-modal').classList.add('active');
+    }
+
+    function showUserDetail(idx) {
+        const data = (window.__allPredictions || [])[idx];
+        renderUserDetailModal(data);
+    }
+
+    function closeUserDetail() {
+        document.getElementById('user-detail-modal').classList.remove('active');
+    }
+
+    // --- FITUR BAGIKAN (prediksi milik sendiri) ---
+    function shareResult() {
+        const champion = bracketData.champion || '?';
+        const text = `Prediksi juara Piala Dunia 2026 versi ${currentUser || 'saya'}: ${champion}! 🏆 Buat prediksimu sendiri di sini:`;
+        const url = currentPredictionDocId ? buildShareUrl(currentPredictionDocId) : window.location.href;
+        doShare('World Cup 2026 Prediction', text, url);
+    }
+
+    // --- FITUR BAGIKAN (prediksi orang lain, dari list leaderboard) ---
+    function shareUserResult(idx) {
+        const data = (window.__allPredictions || [])[idx];
+        if (!data) return;
+        shareUserResultData(data.username, data.champion, data.__id);
+    }
+
+    function shareUserResultData(username, champion, docId) {
+        const text = `Cek prediksi juara Piala Dunia 2026 dari ${username}: ${champion}! 🏆 Lihat bracket lengkapnya & buat punyamu sendiri di sini:`;
+        const url = docId ? buildShareUrl(docId) : window.location.href;
+        doShare(`Prediksi ${username} - World Cup 2026`, text, url);
+    }
+
+    function buildShareUrl(docId) {
+        const base = window.location.origin + window.location.pathname;
+        return `${base}?share=${encodeURIComponent(docId)}`;
+    }
+
+    function doShare(title, text, url) {
+        if (navigator.share) {
+            navigator.share({ title, text, url }).catch(() => {});
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(`${text} ${url}`)
+                .then(() => alert('Link and prediction copied—just paste them anywhere!'))
+                .catch(() => alert('Gagal menyalin otomatis. Salin manual link ini: ' + url));
+        } else {
+            alert('Salin manual link ini untuk membagikan: ' + url);
+        }
+    }
+
+    // --- BUKA PREDIKSI YANG DIBAGIKAN LEWAT LINK (?share=docId) ---
+    async function openSharedFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const sharedId = params.get('share');
+        if (!sharedId) return;
+        if (!firebaseReady || !db) return;
+
+        showLoading("Opening the shared prediction...");
+        try {
+            const doc = await db.collection('predictions').doc(sharedId).get();
+            if (doc.exists) {
+                const data = { __id: doc.id, ...doc.data() };
+                renderUserDetailModal(data);
+            } else {
+                alert("The shared prediction was not found (it may have been deleted)..");
+            }
+        } catch (err) {
+            console.error("Gagal membuka prediksi yang dibagikan:", err);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // --- POPULARITY CHART (Top 5 Prediksi Juara Terpopuler) ---
+    function renderPopularityChart(allPredictions) {
+        const el = document.getElementById('popularity-chart');
+        if (!el) return;
+
+        const counts = {};
+        allPredictions.forEach(p => {
+            if (!p.champion) return;
+            counts[p.champion] = (counts[p.champion] || 0) + 1;
+        });
+
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        if (sorted.length === 0) {
+            el.innerHTML = '';
+            return;
+        }
+        const max = sorted[0][1];
+
+        el.innerHTML = '<div class="chart-title">🔥 Top 5 Prediksi Juara Terpopuler</div>' +
+            sorted.map(([code, count]) => {
+                const pct = Math.round((count / max) * 100);
+                return `
+                    <div class="chart-row">
+                        <img class="chart-flag" src="${getFlagUrl(code)}">
+                        <span class="chart-code">${code}</span>
+                        <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct}%"></div></div>
+                        <span class="chart-count">${count}</span>
+                    </div>`;
+            }).join('');
+    }
+
+    // =========================================================
+    // ====== 5. SUBMIT KE FIRESTORE (menggantikan mockDatabase) ==
+    // =========================================================
+    async function submitPrediction() {
+        if (!checkScoresComplete()) {
+            alert("Isi dulu semua tebakan skor untuk 32 pertandingan sebelum submit!");
+            return;
+        }
+        if (!firebaseReady) {
+            alert("Firebase belum dikonfigurasi. Lihat bagian firebaseConfig di dalam kode.");
+            return;
+        }
+
+        const submitBtn = document.getElementById('btn-submit-scores');
+        const myBracketString = JSON.stringify(bracketData.matches) + bracketData.champion + JSON.stringify(bracketData.scores);
+
+        submitBtn.innerText = "Menyimpan...";
+        submitBtn.disabled = true;
+        showLoading(currentPredictionDocId ? "Memperbarui prediksi..." : "Menyimpan prediksi...");
+
+        try {
+            const payload = {
+                username: currentUser,
+                champion: bracketData.champion,
+                bracketString: myBracketString,
+                matches: bracketData.matches,
+                scores: bracketData.scores,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (currentPredictionDocId) {
+                // Mode edit: update dokumen yang sudah ada, tidak bikin duplikat
+                await db.collection('predictions').doc(currentPredictionDocId).set(payload, { merge: true });
+            } else {
+                // Mode baru: simpan prediksi baru ke koleksi "predictions"
+                const docRef = await db.collection('predictions').add(payload);
+                currentPredictionDocId = docRef.id;
+            }
+
+            // Ambil semua prediksi untuk hitung statistik & leaderboard
+            // (dibatasi 200 data terbaru supaya ringan; cukup untuk skala kecil-menengah)
+            const snapshot = await db.collection('predictions')
+                .orderBy('createdAt', 'desc')
+                .limit(200)
+                .get();
+
+            const allPredictions = snapshot.docs.map(doc => ({ __id: doc.id, ...doc.data() }));
+            window.__allPredictions = allPredictions; // dipakai fitur "Lihat Bracket" prediksi orang lain
+            const totalPredictions = allPredictions.length;
+            const exactMatches = allPredictions.filter(data => data.bracketString === myBracketString).length;
+            const popularityPercentage = totalPredictions > 0
+                ? ((exactMatches / totalPredictions) * 100).toFixed(1)
+                : "0.0";
+
+            document.getElementById('pop-stat').innerText = popularityPercentage + "%";
+
+            const resultsContainer = document.querySelector('.results-container');
+            resultsContainer.classList.remove('dashboard-mode');
+            const submitAnotherBtn = document.getElementById('btn-submit-another');
+            if (submitAnotherBtn) submitAnotherBtn.innerText = "Submit Another";
+
+            renderPopularityChart(allPredictions);
+
+            const leaderboardEl = document.getElementById('leaderboard-list');
+            leaderboardEl.innerHTML = "";
+
+            allPredictions.forEach((data, idx) => {
+                const isMe = data.username === currentUser ? "<span style='color: var(--accent);'> (You)</span>" : "";
+                leaderboardEl.innerHTML += `
+                    <div class="leaderboard-item" style="${isMe ? 'border: 1px solid #d4af37;' : ''}">
+                        <div><span>${data.username}</span> ${isMe}</div>
+                        <div style="display:flex; align-items:center;">
+                            <span>Winner: <img src="${getFlagUrl(data.champion)}"> <span>${data.champion}</span></span>
+                            <button class="btn-detail" onclick="showUserDetail(${idx})">Lihat Bracket</button>
+                            <button class="btn-share-mini" onclick="shareUserResult(${idx})">🔗 Share</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            switchView('view-results');
+        } catch (error) {
+            console.error("Gagal menyimpan ke Firestore:", error);
+            alert("Gagal menyimpan prediksi. Cek koneksi internet, konfigurasi Firebase, atau Firestore Security Rules kamu.");
+        } finally {
+            submitBtn.innerText = "Submit Prediksi";
+            submitBtn.disabled = false;
+            hideLoading();
+        }
+    }
+
+    renderBracket();
+    openSharedFromURL();
+</script>
+</body>
+</html>
