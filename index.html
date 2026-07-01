@@ -505,9 +505,171 @@
             .dropdown-item span { font-size: 16px !important; }
             #team-dropdown { gap: 10px !important; padding: 12px !important; }
         }
+
+        /* ================= TOP NAVBAR & SEARCH (Ditambahkan) ================= */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 5000;
+            background: rgba(10,10,10,0.9); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: space-between;
+            padding: 1vh 1.5vw; gap: 1vw; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            box-sizing: border-box; user-select: none;
+        }
+        .top-navbar.active { display: flex; }
+        .navbar-brand { color: var(--accent); font-size: 0.85vw; white-space: nowrap; display:flex; align-items:center; gap:0.5vw; }
+        .navbar-brand img { width: 2.2vw; height: 2.2vw; min-width:26px; min-height:26px; }
+        .navbar-search { display: flex; align-items: center; gap: 0.5vw; flex: 1; max-width: 28vw; }
+        .navbar-search input {
+            flex: 1; padding: 0.9vh 1vw; border-radius: 20px; border: 1px solid #555;
+            background: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.8vw; outline: none;
+        }
+        .navbar-search input:focus { border-color: var(--accent); }
+        .navbar-search button {
+            background: var(--accent); border: none; color: #000; border-radius: 50%;
+            width: 2.4vw; height: 2.4vw; min-width: 32px; min-height:32px; cursor: pointer; font-size: 0.9vw;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .navbar-menu { display: flex; gap: 0.5vw; flex-wrap: nowrap; }
+        .nav-menu-btn {
+            background: transparent; border: 1px solid #555; color: white; padding: 0.9vh 1vw;
+            border-radius: 20px; font-family: 'Russo One', sans-serif; font-size: 0.65vw; cursor: pointer;
+            white-space: nowrap; transition: 0.2s;
+        }
+        .nav-menu-btn:hover, .nav-menu-btn.active-menu { background: var(--accent); color: #000; border-color: var(--accent); }
+        body.has-navbar .view-section { padding-top: 8vh; box-sizing: border-box; }
+
+        /* ================= CONTENT PAGE (Berita / Cara Kerja / Jadwal / Highlight) ================= */
+        .content-page {
+            background: var(--box-bg); border: 1px solid var(--box-border);
+            width: 76vw; height: 82vh; border-radius: 12px;
+            display: flex; flex-direction: column; color: #111; overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        .content-page-header {
+            padding: 2vh 2vw 1.5vh; border-bottom: 1px solid #ddd; display:flex; align-items:center;
+            justify-content: space-between; flex-wrap: wrap; gap: 1vh; flex-shrink: 0;
+        }
+        .content-page-header h2 { margin: 0; color: var(--accent); font-weight: normal; font-size: 1.3vw; }
+        .content-page-body { flex: 1; overflow-y: auto; padding: 2vh 2vw; }
+
+        /* --- News Page --- */
+        .news-scroll-list { display: flex; flex-direction: column; gap: 1.4vh; }
+        .news-card {
+            display: flex; gap: 1.2vw; background: #fafafa; border: 1px solid #e2e2e2; border-radius: 10px;
+            padding: 1.2vh 1.2vw; cursor: pointer; transition: 0.2s; text-decoration: none; color: #111;
+            align-items: flex-start;
+        }
+        .news-card:hover { background: #f2f2f2; transform: translateX(4px); border-color: var(--accent); }
+        .news-thumb {
+            width: 8.5vw; height: 6.2vw; min-width: 90px; min-height: 66px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 2vw;
+            background: linear-gradient(135deg, #d4af37, #8a6d1f); color: white;
+        }
+        .news-info { flex: 1; min-width: 0; }
+        .news-info .news-source { font-size: 0.62vw; color: #b5952f; font-family: 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: 1px; font-weight:bold; }
+        .news-info h3 { margin: 0.4vh 0; font-size: 0.95vw; font-family: 'Segoe UI', sans-serif; color: #111; line-height: 1.3; }
+        .news-info p { margin: 0; font-size: 0.78vw; color: #555; font-family: 'Segoe UI', sans-serif; line-height: 1.45; }
+        .news-info .news-link { font-size: 0.7vw; color: #1a5fb4; margin-top: 0.5vh; display: inline-block; font-family: 'Segoe UI', sans-serif; }
+
+        /* --- Schedule Page --- */
+        .schedule-day-group { margin-bottom: 2.4vh; }
+        .schedule-day-title {
+            font-family: 'Segoe UI', sans-serif; font-size: 0.85vw; color: #fff; background: var(--accent);
+            display:inline-block; padding: 0.6vh 1vw; border-radius: 20px; margin-bottom: 1vh; font-weight:bold;
+        }
+        table.schedule-table { width: 100%; border-collapse: collapse; font-family: 'Segoe UI', sans-serif; }
+        table.schedule-table th { text-align:left; font-size: 0.68vw; color: #888; padding: 0.6vh 0.8vw; border-bottom: 2px solid #ddd; }
+        table.schedule-table td { padding: 1vh 0.8vw; border-bottom: 1px solid #eee; font-size: 0.82vw; vertical-align: middle; }
+        .sched-team { display:flex; align-items:center; gap:0.5vw; white-space: nowrap; }
+        .sched-team img { width: 1.7vw; height: 1.25vw; min-width:20px; min-height:15px; border-radius: 3px; object-fit: cover; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .sched-vs { color:#999; font-size:0.75vw; }
+        .sched-status-done { background:#e8f5e9; color:#2e7d32; font-size:0.62vw; padding:3px 9px; border-radius:10px; font-weight:bold; white-space: nowrap; }
+        .sched-status-upcoming { background:#fff3e0; color:#e65100; font-size:0.62vw; padding:3px 9px; border-radius:10px; font-weight:bold; white-space: nowrap; }
+        .sched-score { font-weight:bold; color: #b5952f; font-size: 0.85vw; }
+
+        /* --- Highlights Page --- */
+        .highlights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vw; }
+        .highlight-card {
+            background: #111; border-radius: 10px; overflow: hidden; text-decoration:none; color:white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4); transition: 0.2s; display:block;
+        }
+        .highlight-card:hover { transform: translateY(-4px); box-shadow: 0 8px 18px rgba(0,0,0,0.5); }
+        .highlight-thumb {
+            position:relative; width:100%; height: 8.5vw; background: linear-gradient(135deg,#1a1a1a,#333);
+            display:flex; align-items:center; justify-content:center;
+        }
+        .highlight-thumb .play-icon {
+            position:absolute; width: 2.8vw; height:2.8vw; min-width:34px; min-height:34px; background: rgba(200,0,0,0.9); border-radius:50%;
+            display:flex; align-items:center; justify-content:center; color:white; font-size:1.1vw;
+        }
+        .highlight-flags { display:flex; align-items:center; gap:0.7vw; }
+        .highlight-flags img { width: 2.6vw; height: 1.9vw; min-width:32px; min-height:23px; border-radius:4px; object-fit:cover; border:1px solid #444; }
+        .highlight-real-thumb { width:100%; height:100%; object-fit:cover; }
+        .highlight-vs-text { font-family:'Segoe UI',sans-serif; font-size:0.72vw; color:#aaa; }
+        .highlight-info { padding: 1vh 1vw 1.4vh; }
+        .highlight-info .h-teams { font-size: 0.82vw; font-weight:bold; font-family: 'Russo One', sans-serif; }
+        .highlight-info .h-score { color: var(--accent); font-size:1.05vw; margin: 0.3vh 0; font-family: 'Russo One', sans-serif; }
+        .highlight-info .h-meta { font-size:0.62vw; color:#999; font-family:'Segoe UI',sans-serif; }
+        .highlight-info .h-source { font-size:0.62vw; color:#ff5c5c; font-family:'Segoe UI',sans-serif; margin-top:0.5vh; font-weight:bold; }
+
+        /* --- Mobile Responsive tambahan --- */
+        @media (max-width: 820px) {
+            .top-navbar { flex-wrap: wrap; padding: 8px 10px; gap: 6px; }
+            .navbar-brand { font-size: 12px; }
+            .navbar-brand img { width: 22px; height: 22px; }
+            .navbar-search { max-width: none; width: 100%; order: 3; }
+            .navbar-search input { font-size: 13px; padding: 9px 12px; }
+            .navbar-search button { width: 32px; height: 32px; font-size: 13px; }
+            .navbar-menu { order: 4; width: 100%; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; gap: 8px; }
+            .nav-menu-btn { font-size: 11px; padding: 8px 12px; }
+            body.has-navbar .view-section { padding-top: 150px !important; }
+
+            .content-page { width: 94vw !important; height: 82vh !important; }
+            .content-page-header { padding: 14px !important; }
+            .content-page-header h2 { font-size: 16px !important; }
+            .content-page-body { padding: 14px !important; }
+
+            .news-thumb { width: 70px !important; height: 60px !important; font-size: 22px !important; }
+            .news-info h3 { font-size: 13px !important; }
+            .news-info p { font-size: 12px !important; }
+            .news-info .news-source, .news-info .news-link { font-size: 10px !important; }
+
+            table.schedule-table th { font-size: 10px !important; }
+            table.schedule-table td { font-size: 11px !important; padding: 8px 6px !important; }
+            .sched-team img { width: 22px !important; height: 16px !important; }
+            .schedule-day-title { font-size: 12px !important; }
+            .sched-score { font-size: 12px !important; }
+            .sched-status-done, .sched-status-upcoming { font-size: 9px !important; padding: 3px 6px !important; }
+
+            .highlights-grid { grid-template-columns: repeat(1, 1fr) !important; gap: 12px !important; }
+            .highlight-thumb { height: 140px !important; }
+            .highlight-flags img { width: 34px !important; height: 25px !important; }
+            .play-icon { width: 38px !important; height: 38px !important; font-size: 14px !important; }
+            .highlight-info .h-teams { font-size: 13px !important; }
+            .highlight-info .h-score { font-size: 16px !important; }
+            .highlight-info .h-meta, .highlight-info .h-source { font-size: 10px !important; }
+        }
     </style>
 </head>
 <body>
+
+<div id="top-navbar" class="top-navbar">
+    <div class="navbar-brand">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/2026_FIFA_World_Cup_emblem.svg/960px-2026_FIFA_World_Cup_emblem.svg.png?_=20260317182607" alt="logo">
+        <span>WC26 PREDICTION</span>
+    </div>
+    <div class="navbar-search">
+        <input type="text" id="site-search-input" placeholder="Cari tim, berita, atau jadwal..." onkeydown="if(event.key==='Enter'){ runSiteSearch(); }">
+        <button onclick="runSiteSearch()" title="Cari">🔍</button>
+    </div>
+    <div class="navbar-menu">
+        <button class="nav-menu-btn" id="nav-btn-bracket" onclick="goToBracketFromNav()">🏆 Bracket</button>
+        <button class="nav-menu-btn" id="nav-btn-news" onclick="openNewsPage()">📰 Berita Terkini</button>
+        <button class="nav-menu-btn" id="nav-btn-howto" onclick="openHowtoPage()">⚙️ Cara Kerja</button>
+        <button class="nav-menu-btn" id="nav-btn-schedule" onclick="openSchedulePage()">📅 Jadwal</button>
+        <button class="nav-menu-btn" id="nav-btn-highlights" onclick="openHighlightsPage()">🎬 Highlight</button>
+    </div>
+</div>
 
 <div id="view-landing" class="view-section view-active">
     <div class="landing-box">
@@ -631,6 +793,99 @@
     </div>
 </div>
 
+
+<!-- ============ HALAMAN BERITA TERKINI ============ -->
+<div id="view-news" class="view-section">
+    <div class="content-page">
+        <div class="content-page-header">
+            <h2>📰 Berita Terkini World Cup 2026</h2>
+            <button class="btn btn-secondary" onclick="goToBracketFromNav()">← Kembali ke Bracket</button>
+        </div>
+        <div class="content-page-body">
+            <p style="font-family:'Segoe UI',sans-serif; font-size:0.85vw; color:#666; margin-top:0;">
+                Rangkuman berita terbaru seputar Piala Dunia 2026, disusun dari berbagai media olahraga terpercaya di Indonesia.
+                Klik salah satu berita untuk membaca artikel lengkapnya langsung di portal berita aslinya.
+            </p>
+            <div class="news-scroll-list" id="news-list-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ HALAMAN CARA KERJA SIMULATOR ============ -->
+<div id="view-howto" class="view-section">
+    <div class="content-page">
+        <div class="content-page-header">
+            <h2>⚙️ Cara Kerja Simulator</h2>
+            <button class="btn btn-secondary" onclick="goToBracketFromNav()">← Kembali ke Bracket</button>
+        </div>
+        <div class="content-page-body privacy-body">
+            <h3>1. Apa Itu Bracket Simulator Ini?</h3>
+            <p>World Cup 2026 Bracket Simulator adalah alat prediksi interaktif yang memungkinkan kamu menyusun perkiraan hasil setiap pertandingan di babak gugur Piala Dunia 2026, mulai dari babak 32 besar hingga partai final, tanpa perlu keahlian statistik apa pun. Kamu cukup memilih tim yang menurutmu akan menang di setiap laga, dan bracket akan otomatis tersusun sampai menghasilkan satu juara dunia pilihanmu.</p>
+
+            <h3>2. Langkah-Langkah Membuat Prediksi</h3>
+            <ul>
+                <li><strong>Masukkan Username</strong> — Isi nama panggilan bebas di halaman awal, lalu klik "Start Prediction".</li>
+                <li><strong>Pilih Pemenang Tiap Laga</strong> — Klik salah satu bendera pada setiap kotak pertandingan (match box) untuk menentukan siapa yang menurutmu akan melaju ke babak berikutnya. Pilihanmu otomatis "naik" ke kolom babak selanjutnya.</li>
+                <li><strong>Ulangi Hingga Juara Terpilih</strong> — Lanjutkan proses ini dari babak 32 besar, 16 besar, perempat final, semifinal, hingga akhirnya muncul satu tim juara di kotak trofi tengah.</li>
+                <li><strong>Isi Prediksi Skor</strong> — Setelah bracket lengkap, klik "Continue to Score Prediction" untuk menebak skor akhir setiap pertandingan yang sudah kamu pilih.</li>
+                <li><strong>Submit & Lihat Statistik</strong> — Klik "Submit Prediction" untuk menyimpan prediksimu. Sistem akan menghitung berapa persen prediksimu identik dengan prediksi pengguna lain, serta menampilkan leaderboard publik.</li>
+            </ul>
+
+            <h3>3. Fitur Random Prediction</h3>
+            <p>Jika kamu tidak ingin memilih secara manual, tombol "Random Prediction" akan mengacak seluruh hasil bracket secara otomatis. Fitur ini cocok digunakan sebagai titik awal sebelum kamu menyesuaikan beberapa pilihan sesuai analisis pribadimu.</p>
+
+            <h3>4. Bagaimana Statistik Popularitas Dihitung?</h3>
+            <p>Setiap prediksi yang kamu kirim akan dibandingkan dengan seluruh prediksi pengguna lain yang tersimpan di database. Persentase "kecocokan" menunjukkan seberapa banyak pengguna lain yang memiliki susunan bracket dan juara yang sama persis denganmu. Semakin tinggi persentasenya, berarti pilihanmu semakin sejalan dengan opini mayoritas komunitas.</p>
+
+            <h3>5. Mengedit atau Membagikan Prediksi</h3>
+            <p>Setelah submit, kamu masih dapat mengubah pilihanmu lewat tombol "Edit Prediksi", atau membagikan hasil prediksimu ke teman melalui tombol "Bagikan" yang akan menghasilkan tautan unik menuju bracket milikmu.</p>
+
+            <h3>6. Sumber Data Bendera & Tim</h3>
+            <p>Bendera negara pada aplikasi ini diambil dari layanan FlagCDN, sedangkan susunan 32 tim di babak gugur mengikuti hasil resmi fase grup Piala Dunia 2026 yang dipublikasikan FIFA.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ HALAMAN JADWAL PERTANDINGAN ============ -->
+<div id="view-schedule" class="view-section">
+    <div class="content-page">
+        <div class="content-page-header">
+            <h2>📅 Jadwal Pertandingan</h2>
+            <button class="btn btn-secondary" onclick="goToBracketFromNav()">← Kembali ke Bracket</button>
+        </div>
+        <div class="content-page-body" id="schedule-body"></div>
+    </div>
+</div>
+
+<!-- ============ HALAMAN HIGHLIGHT PERTANDINGAN ============ -->
+<div id="view-highlights" class="view-section">
+    <div class="content-page">
+        <div class="content-page-header">
+            <h2>🎬 Highlight Pertandingan</h2>
+            <button class="btn btn-secondary" onclick="goToBracketFromNav()">← Kembali ke Bracket</button>
+        </div>
+        <div class="content-page-body">
+            <p style="font-family:'Segoe UI',sans-serif; font-size:0.85vw; color:#666; margin-top:0;">
+                Cuplikan gol dan momen penting dari setiap pertandingan babak gugur Piala Dunia 2026 ditayangkan resmi secara gratis
+                melalui kanal <strong>TVRI Sport</strong> di YouTube, selaku pemegang hak siar eksklusif Piala Dunia 2026 di Indonesia.
+                Klik salah satu kartu di bawah untuk mencari video highlight-nya di kanal TVRI Sport.
+            </p>
+            <div class="highlights-grid" id="highlights-grid-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ HALAMAN HASIL PENCARIAN ============ -->
+<div id="view-search" class="view-section">
+    <div class="content-page">
+        <div class="content-page-header">
+            <h2 id="search-results-title">🔍 Hasil Pencarian</h2>
+            <button class="btn btn-secondary" onclick="goToBracketFromNav()">← Kembali ke Bracket</button>
+        </div>
+        <div class="content-page-body" id="search-results-body"></div>
+    </div>
+</div>
+
 <div id="dropdown-backdrop" onclick="closeDropdown()"></div>
 <div id="team-dropdown"></div>
 <div id="fb-status">Menghubungkan ke database...</div>
@@ -734,6 +989,405 @@
     };
     const getFlagUrl = (code) => `https://flagcdn.com/w40/${flags[code]}.png`;
 
+    // =========================================================
+    // ====== FITUR TAMBAHAN: NAVBAR, BERITA, JADWAL, HIGHLIGHT ==
+    // =========================================================
+
+    const TEAM_NAMES = {
+        'GER':'Jerman', 'PAR':'Paraguay', 'FRA':'Prancis', 'SWE':'Swedia', 'RSA':'Afrika Selatan', 'CAN':'Kanada',
+        'NED':'Belanda', 'MAR':'Maroko', 'POR':'Portugal', 'CRO':'Kroasia', 'ESP':'Spanyol', 'AUT':'Austria',
+        'USA':'Amerika Serikat', 'BIH':'Bosnia-Herzegovina', 'BEL':'Belgia', 'SEN':'Senegal', 'BRA':'Brasil',
+        'JPN':'Jepang', 'CIV':'Pantai Gading', 'NOR':'Norwegia', 'MEX':'Meksiko', 'ECU':'Ekuador', 'ENG':'Inggris',
+        'COD':'RD Kongo', 'ARG':'Argentina', 'CPV':'Tanjung Verde', 'AUS':'Australia', 'EGY':'Mesir', 'SUI':'Swiss',
+        'ALG':'Aljazair', 'COL':'Kolombia', 'GHA':'Ghana'
+    };
+    const getTeamName = (code) => TEAM_NAMES[code] || code;
+
+    // --- DATA BERITA (dirangkum & ditulis ulang dari berbagai media olahraga, per 1 Juli 2026) ---
+    // Catatan: ini jadi data CADANGAN (fallback) kalau koleksi "news" di Firestore masih kosong.
+    // Begitu ada data di Firestore, isi variabel ini akan digantikan otomatis oleh subscribeToFirestoreData().
+    let NEWS_DATA = [
+        {
+            icon: '😲', source: 'Jernih.id',
+            title: 'Kejutan Besar 32 Besar: Jerman dan Belanda Angkat Koper',
+            snippet: 'Jerman tersingkir lewat adu penalti dari Paraguay, sementara Belanda kalah dramatis dari Maroko. Kedua raksasa Eropa ini harus mengakhiri langkah mereka lebih cepat dari perkiraan banyak pengamat.',
+            url: 'https://www.jernih.id/kejutan-piala-dunia-2026-jerman-dan-belanda-angkat-koper-brasil-lolos-dramatis-ke-16-besar'
+        },
+        {
+            icon: '⚽', source: 'Bola.com',
+            title: 'Mbappe Bersinar, Prancis Melaju Mulus ke 16 Besar',
+            snippet: 'Kylian Mbappe menyumbang dua gol saat Prancis menundukkan Swedia dengan skor telak 3-0 di babak 32 besar, sekaligus mengunci tiket ke babak 16 besar untuk berjumpa pemenang laga Jerman melawan Paraguay.',
+            url: 'https://www.bola.com/piala-dunia/read/8128018/jadwal-pertandingan-32-besar-piala-dunia-2026-hari-ini-rabu-1-juli'
+        },
+        {
+            icon: '🧤', source: 'Okezone',
+            title: 'Bono Jadi Pahlawan, Maroko Singkirkan Belanda Lewat Penalti',
+            snippet: 'Kiper Yassine Bounou tampil gemilang dengan menggagalkan penalti Belanda, membawa Maroko menang adu penalti 3-2 dan melenggang ke babak 16 besar Piala Dunia 2026.',
+            url: 'https://www.okezone.com/tag/piala-dunia-2026'
+        },
+        {
+            icon: '🇧🇷', source: 'Bola.com',
+            title: 'Brasil Susah Payah Depak Jepang 2-1',
+            snippet: 'Gol dramatis Gabriel Martinelli pada masa injury time memastikan Brasil melangkah ke babak 16 besar usai mengalahkan Jepang, menyisakan Australia sebagai satu-satunya wakil Asia yang masih bertahan di turnamen.',
+            url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026'
+        },
+        {
+            icon: '🎉', source: 'SINDOnews',
+            title: 'Paraguay Tetapkan Hari Libur Nasional Usai Singkirkan Jerman',
+            snippet: 'Kemenangan adu penalti 4-3 atas Jerman membuat pemerintah Paraguay memutuskan memberikan hari libur nasional bagi warganya sebagai bentuk perayaan pencapaian bersejarah timnas mereka.',
+            url: 'https://www.sindonews.com/topic/146307/piala-dunia-2026'
+        },
+        {
+            icon: '🍁', source: 'Bola.com',
+            title: 'Kanada Jadi Tim Pertama yang Amankan Tiket 16 Besar',
+            snippet: 'Gol telat Stephen Eustaquio membawa Kanada menang 1-0 atas Afrika Selatan pada laga pembuka babak 32 besar, menjadikan mereka tim pertama yang memastikan diri lolos ke babak berikutnya.',
+            url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026'
+        },
+        {
+            icon: '✈️', source: 'Detikcom',
+            title: 'Timnas Korea Selatan Disambut Kekecewaan Suporter di Bandara',
+            snippet: 'Sejumlah suporter yang kecewa berteriak menuntut pelatih Hong Myung-bo mundur saat skuad Taegeuk Warriors tiba di Bandara Internasional Incheon usai tersingkir dari Piala Dunia 2026.',
+            url: 'https://www.detik.com/tag/piala-dunia-2026'
+        },
+        {
+            icon: '📋', source: 'CNN Indonesia',
+            title: 'Jadwal Lengkap Babak 32 Besar hingga 4 Juli',
+            snippet: 'Babak 32 besar Piala Dunia 2026 berlangsung lebih dari sepekan, mulai 29 Juni hingga 4 Juli 2026, dengan 16 laga yang tersebar di berbagai kota tuan rumah Amerika Serikat, Kanada, dan Meksiko.',
+            url: 'https://www.cnnindonesia.com/olahraga/20260628114254-142-1374264/jadwal-lengkap-32-besar-piala-dunia-2026-sajikan-laga-seru'
+        },
+        {
+            icon: '📺', source: 'Goal.com Indonesia',
+            title: 'TVRI Pegang Hak Siar Eksklusif, Siaran Gratis Lewat Dua Kanal',
+            snippet: 'TVRI menyiarkan seluruh pertandingan Piala Dunia 2026 secara gratis melalui kanal TVRI Nasional dan TVRI Sport, serta menggandeng platform OTT MAXstream TV dan Folaplay untuk layanan streaming pendukung.',
+            url: 'https://www.goal.com/id/berita/jadwal-siaran-langsung-piala-dunia-2026-tvri/bltaff4509465b81a4a'
+        },
+        {
+            icon: '🗣️', source: 'Bola.com',
+            title: 'Legenda Kritik Mentalitas Jerman usai Tersingkir',
+            snippet: 'Sejumlah mantan pemain menyoroti minimnya rencana cadangan dan kegagalan eksekusi penalti sebagai penyebab utama tersingkirnya Jerman dari Piala Dunia 2026 di tangan Paraguay.',
+            url: 'https://www.bola.com/piala-dunia/read/8059329/jadwal-lengkap-pertandingan-32-besar-piala-dunia-2026'
+        },
+        {
+            icon: '📝', source: 'Kompas TV',
+            title: '32 Tim yang Melaju ke Babak Gugur Sudah Lengkap',
+            snippet: 'Daftar 32 negara yang lolos ke fase gugur terdiri dari 12 juara grup, 12 tim runner-up, dan 8 tim peringkat ketiga terbaik, setelah seluruh laga fase grup Piala Dunia 2026 rampung dimainkan.',
+            url: 'https://www.kompas.tv/olahraga/677558/daftar-32-tim-lolos-ke-babak-gugur-piala-dunia-2026-dan-jadwal-lengkap-pertandingannya'
+        },
+        {
+            icon: '🗂️', source: 'Kompas.com',
+            title: 'Bagan dan Jadwal Lengkap 32 Besar',
+            snippet: 'Fase grup Piala Dunia 2026 menghasilkan total 72 pertandingan dengan 215 gol, sebelum turnamen memasuki fase gugur murni di mana setiap tim tidak lagi punya ruang untuk melakukan kesalahan.',
+            url: 'https://bola.kompas.com/read/2026/06/29/10315708/bagan-32-besar-piala-dunia-2026-lengkap-dan-jadwal-laga'
+        },
+        {
+            icon: '▶️', source: 'Katadata',
+            title: 'Nonton Highlight Piala Dunia 2026 secara Legal di YouTube',
+            snippet: 'Meski siaran langsung penuh dibatasi aturan hak siar teritorial, YouTube tetap berperan sebagai wadah resmi untuk cuplikan gol dan momen penting lewat kanal-kanal mitra resmi TVRI.',
+            url: 'https://katadata.co.id/lifestyle/varia/6a3492892836f/apakah-nonton-live-streaming-piala-dunia-2026-bisa-di-youtube'
+        },
+        {
+            icon: '📚', source: 'Wikipedia',
+            title: 'Rekap Lengkap Babak 32 Besar Piala Dunia 2026',
+            snippet: 'Halaman ensiklopedia ini merangkum seluruh 16 pertandingan babak 32 besar beserta rekor pertemuan sebelumnya antar tim yang berlaga di ajang Piala Dunia.',
+            url: 'https://id.wikipedia.org/wiki/Babak_32_besar_Piala_Dunia_FIFA_2026'
+        },
+        {
+            icon: '🔄', source: 'PDI Perjuangan Bali News',
+            title: 'Update Jadwal dan Hasil Babak 32 Besar Hari demi Hari',
+            snippet: 'Portal ini merangkum hasil pertandingan serta jadwal laga berikutnya secara harian sepanjang babak 32 besar berlangsung hingga 4 Juli 2026, termasuk analisis singkat tiap pertandingan besar.',
+            url: 'https://www.pdiperjuanganbali.id/jadwal-lengkap-babak-32-besar-piala-dunia-2026'
+        }
+    ];
+
+    // --- DATA JADWAL BABAK 32 BESAR (jadwal & hasil resmi per 1 Juli 2026, waktu WIB) ---
+    // Data cadangan (fallback) kalau koleksi "schedule" (round: "R32") di Firestore masih kosong
+    let SCHEDULE_R32 = [
+        { day: 'Senin, 29 Juni 2026', time: '02:00 WIB', t1: 'RSA', t2: 'CAN', venue: 'Los Angeles Stadium, AS', status: 'done', score: '0-1' },
+        { day: 'Selasa, 30 Juni 2026', time: '00:00 WIB', t1: 'BRA', t2: 'JPN', venue: 'Houston Stadium, AS', status: 'done', score: '2-1' },
+        { day: 'Selasa, 30 Juni 2026', time: '03:30 WIB', t1: 'GER', t2: 'PAR', venue: 'Boston Stadium, AS', status: 'done', score: '0-0 (Pen 3-4)' },
+        { day: 'Selasa, 30 Juni 2026', time: '08:00 WIB', t1: 'NED', t2: 'MAR', venue: 'Monterrey Stadium, Meksiko', status: 'done', score: '1-1 (Pen 3-2)' },
+        { day: 'Rabu, 1 Juli 2026', time: '00:00 WIB', t1: 'CIV', t2: 'NOR', venue: 'Dallas Stadium, AS', status: 'done', score: '1-2' },
+        { day: 'Rabu, 1 Juli 2026', time: '04:00 WIB', t1: 'FRA', t2: 'SWE', venue: 'New York New Jersey Stadium, AS', status: 'done', score: '3-0' },
+        { day: 'Rabu, 1 Juli 2026', time: '08:00 WIB', t1: 'MEX', t2: 'ECU', venue: 'Mexico City Stadium, Meksiko', status: 'done', score: '2-0' },
+        { day: 'Rabu, 1 Juli 2026', time: '23:00 WIB', t1: 'ENG', t2: 'COD', venue: 'Atlanta Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Kamis, 2 Juli 2026', time: '03:00 WIB', t1: 'BEL', t2: 'SEN', venue: 'Seattle Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Kamis, 2 Juli 2026', time: '07:00 WIB', t1: 'USA', t2: 'BIH', venue: 'San Francisco Bay Area Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Jumat, 3 Juli 2026', time: '02:00 WIB', t1: 'ESP', t2: 'AUT', venue: 'Los Angeles Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Jumat, 3 Juli 2026', time: '06:00 WIB', t1: 'POR', t2: 'CRO', venue: 'Toronto Stadium, Kanada', status: 'upcoming', score: null },
+        { day: 'Jumat, 3 Juli 2026', time: '10:00 WIB', t1: 'SUI', t2: 'ALG', venue: 'BC Place Vancouver, Kanada', status: 'upcoming', score: null },
+        { day: 'Sabtu, 4 Juli 2026', time: '01:00 WIB', t1: 'AUS', t2: 'EGY', venue: 'Dallas Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Sabtu, 4 Juli 2026', time: '05:00 WIB', t1: 'ARG', t2: 'CPV', venue: 'Miami Stadium, AS', status: 'upcoming', score: null },
+        { day: 'Sabtu, 4 Juli 2026', time: '08:30 WIB', t1: 'COL', t2: 'GHA', venue: 'Kansas City Stadium, AS', status: 'upcoming', score: null }
+    ];
+
+    // --- DATA JADWAL BABAK 16 BESAR (tim TBA akan terisi setelah 32 besar rampung) ---
+    // Data cadangan (fallback) kalau koleksi "schedule" (round: "R16") di Firestore masih kosong
+    let SCHEDULE_R16 = [
+        { day: 'Minggu, 5 Juli 2026', time: '00:00 WIB', t1: 'CAN', t2: 'MAR', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Minggu, 5 Juli 2026', time: '04:00 WIB', t1: 'PAR', t2: 'FRA', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Senin, 6 Juli 2026', time: '03:00 WIB', t1: 'BRA', t2: 'NOR', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Senin, 6 Juli 2026', time: '07:00 WIB', t1: 'MEX', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Selasa, 7 Juli 2026', time: '02:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Selasa, 7 Juli 2026', time: '07:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Selasa, 7 Juli 2026', time: '23:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null },
+        { day: 'Rabu, 8 Juli 2026', time: '03:00 WIB', t1: 'TBA', t2: 'TBA', venue: 'Menyusul', status: 'upcoming', score: null }
+    ];
+
+    // --- RENDER: BERITA ---
+    function renderNewsList(list) {
+        const container = document.getElementById('news-list-container');
+        if (!container) return;
+        if (!list || list.length === 0) {
+            container.innerHTML = "<p style='font-family:\"Segoe UI\",sans-serif;color:#888;'>Tidak ada berita yang cocok dengan pencarianmu.</p>";
+            return;
+        }
+        container.innerHTML = list.map(n => `
+            <a class="news-card" href="${n.url}" target="_blank" rel="noopener noreferrer">
+                <div class="news-thumb">${n.icon}</div>
+                <div class="news-info">
+                    <div class="news-source">${n.source}</div>
+                    <h3>${n.title}</h3>
+                    <p>${n.snippet}</p>
+                    <span class="news-link">Baca selengkapnya di ${n.source} →</span>
+                </div>
+            </a>
+        `).join('');
+    }
+
+    function openNewsPage() {
+        renderNewsList(NEWS_DATA);
+        switchView('view-news');
+    }
+
+    function openHowtoPage() {
+        switchView('view-howto');
+    }
+
+    // --- RENDER: JADWAL ---
+    function renderScheduleRow(m) {
+        const statusHTML = m.status === 'done'
+            ? `<span class="sched-status-done">Selesai</span>`
+            : `<span class="sched-status-upcoming">Belum Main</span>`;
+        const scoreHTML = m.status === 'done' ? `<span class="sched-score">${m.score}</span>` : `<span class="sched-vs">vs</span>`;
+        const teamCell = (code) => {
+            if (code === 'TBA' || !flags[code]) {
+                return `<div class="sched-team"><div class="tbd-flag" style="width:1.7vw;height:1.25vw;font-size:0.6vw;">?</div><span>TBA</span></div>`;
+            }
+            return `<div class="sched-team"><img src="${getFlagUrl(code)}"><span>${getTeamName(code)}</span></div>`;
+        };
+        return `
+            <tr>
+                <td>${teamCell(m.t1)}</td>
+                <td style="text-align:center;">${scoreHTML}</td>
+                <td>${teamCell(m.t2)}</td>
+                <td>${m.time}</td>
+                <td>${m.venue}</td>
+                <td>${statusHTML}</td>
+            </tr>`;
+    }
+
+    function renderScheduleGroup(list) {
+        const grouped = {};
+        list.forEach(m => { (grouped[m.day] = grouped[m.day] || []).push(m); });
+        return Object.keys(grouped).map(day => `
+            <div class="schedule-day-group">
+                <div class="schedule-day-title">${day}</div>
+                <table class="schedule-table">
+                    <thead><tr><th>Tim 1</th><th></th><th>Tim 2</th><th>Jam (WIB)</th><th>Venue</th><th>Status</th></tr></thead>
+                    <tbody>${grouped[day].map(renderScheduleRow).join('')}</tbody>
+                </table>
+            </div>
+        `).join('');
+    }
+
+    function renderSchedule() {
+        const body = document.getElementById('schedule-body');
+        if (!body) return;
+        body.innerHTML = `
+            <h3 style="font-family:'Segoe UI',sans-serif;color:#b5952f; margin-top:0;">Babak 32 Besar (29 Juni – 4 Juli 2026)</h3>
+            ${renderScheduleGroup(SCHEDULE_R32)}
+            <h3 style="font-family:'Segoe UI',sans-serif;color:#b5952f; margin-top:2vh;">Babak 16 Besar (5 – 8 Juli 2026)</h3>
+            <p style="font-family:'Segoe UI',sans-serif;font-size:0.8vw;color:#777;">Tim dengan status "TBA" akan otomatis terisi setelah pertandingan babak 32 besar terkait selesai dimainkan.</p>
+            ${renderScheduleGroup(SCHEDULE_R16)}
+            <h3 style="font-family:'Segoe UI',sans-serif;color:#b5952f; margin-top:2vh;">Babak Selanjutnya</h3>
+            <ul style="font-family:'Segoe UI',sans-serif;font-size:0.85vw;color:#333;line-height:1.9;">
+                <li><strong>Perempat Final:</strong> 9 – 11 Juli 2026 (tim ditentukan setelah babak 16 besar)</li>
+                <li><strong>Semifinal:</strong> 14 – 15 Juli 2026</li>
+                <li><strong>Perebutan Tempat Ketiga:</strong> 18 Juli 2026</li>
+                <li><strong>Final:</strong> 19 Juli 2026 — MetLife Stadium, New York/New Jersey (kapasitas 82.500 penonton)</li>
+            </ul>
+        `;
+    }
+
+    function openSchedulePage() {
+        renderSchedule();
+        switchView('view-schedule');
+    }
+
+    // --- RENDER: HIGHLIGHT ---
+    function renderHighlights() {
+        const container = document.getElementById('highlights-grid-container');
+        if (!container) return;
+        // Gabungkan babak 32 besar & 16 besar, ambil yang statusnya sudah 'done'
+        const completed = [...SCHEDULE_R32, ...SCHEDULE_R16].filter(m => m.status === 'done');
+        container.innerHTML = completed.map(m => {
+            const hasVideo = !!m.youtubeId; // true kalau dokumen jadwal punya field youtubeId
+
+            // Kalau ada youtubeId -> tautkan langsung ke video itu.
+            // Kalau tidak ada -> fallback: buka halaman pencarian YouTube (perilaku lama).
+            const ytUrl = hasVideo
+                ? `https://www.youtube.com/watch?v=${m.youtubeId}`
+                : `https://www.youtube.com/results?search_query=${encodeURIComponent(`TVRI Sport highlight ${getTeamName(m.t1)} vs ${getTeamName(m.t2)} Piala Dunia 2026`)}`;
+
+            // Kalau ada youtubeId -> pakai thumbnail asli video dari YouTube.
+            // Kalau tidak ada -> tampilkan bendera kedua tim seperti sebelumnya.
+            const thumbHTML = hasVideo
+                ? `<img class="highlight-real-thumb" src="https://img.youtube.com/vi/${m.youtubeId}/hqdefault.jpg" alt="Highlight ${m.t1} vs ${m.t2}">`
+                : `<div class="highlight-flags">
+                        <img src="${getFlagUrl(m.t1)}"><span class="highlight-vs-text">VS</span><img src="${getFlagUrl(m.t2)}">
+                   </div>`;
+
+            const sourceLabel = hasVideo ? '▶ Tonton highlight di YouTube' : '▶ Cari di TVRI Sport (YouTube)';
+            const roundLabel = m.round === 'R16' ? 'Babak 16 Besar' : 'Babak 32 Besar';
+
+            return `
+                <a class="highlight-card" href="${ytUrl}" target="_blank" rel="noopener noreferrer">
+                    <div class="highlight-thumb">
+                        ${thumbHTML}
+                        <div class="play-icon">▶</div>
+                    </div>
+                    <div class="highlight-info">
+                        <div class="h-teams">${m.t1} vs ${m.t2}</div>
+                        <div class="h-score">${m.score}</div>
+                        <div class="h-meta">${m.day} · ${roundLabel}</div>
+                        <div class="h-source">${sourceLabel}</div>
+                    </div>
+                </a>`;
+        }).join('');
+    }
+
+    // =========================================================
+    // ====== SINKRONISASI OTOMATIS DARI FIRESTORE (BERITA & JADWAL) ==
+    // =========================================================
+    // Fungsi ini "mendengarkan" (listen) koleksi Firestore secara live.
+    // Setiap kali kamu tambah/ubah/hapus dokumen lewat Firebase Console,
+    // SEMUA pengunjung yang sedang membuka situs ini akan otomatis
+    // melihat perubahannya tanpa perlu refresh halaman.
+    function subscribeToFirestoreData() {
+        if (!firebaseReady || !db) {
+            console.warn("Firestore belum siap, memakai data bawaan (fallback) di dalam kode.");
+            return;
+        }
+
+        // --- Dengarkan koleksi "news" ---
+        db.collection('news').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+            if (snapshot.empty) return; // koleksi masih kosong -> tetap pakai fallback NEWS_DATA
+            NEWS_DATA = snapshot.docs.map(doc => doc.data());
+
+            // Kalau halaman Berita sedang dibuka, render ulang biar langsung kelihatan
+            const newsView = document.getElementById('view-news');
+            if (newsView && newsView.classList.contains('view-active')) renderNewsList(NEWS_DATA);
+        }, (err) => console.error("Gagal sinkron koleksi 'news':", err));
+
+        // --- Dengarkan koleksi "schedule" ---
+        db.collection('schedule').orderBy('order', 'asc').onSnapshot((snapshot) => {
+            if (snapshot.empty) return; // koleksi masih kosong -> tetap pakai fallback SCHEDULE_R32/R16
+            const r32 = [], r16 = [];
+            snapshot.docs.forEach(doc => {
+                const d = doc.data();
+                (d.round === 'R16' ? r16 : r32).push(d);
+            });
+            if (r32.length > 0) SCHEDULE_R32 = r32;
+            if (r16.length > 0) SCHEDULE_R16 = r16;
+
+            // Render ulang halaman Jadwal & Highlight kalau sedang dibuka
+            const schedView = document.getElementById('view-schedule');
+            if (schedView && schedView.classList.contains('view-active')) renderSchedule();
+            const hlView = document.getElementById('view-highlights');
+            if (hlView && hlView.classList.contains('view-active')) renderHighlights();
+        }, (err) => console.error("Gagal sinkron koleksi 'schedule':", err));
+    }
+
+    function openHighlightsPage() {
+        renderHighlights();
+        switchView('view-highlights');
+    }
+
+    // --- NAVIGASI UMUM ---
+    function goToBracketFromNav() {
+        switchView('view-bracket');
+        renderBracket();
+    }
+
+    function setActiveNavButton(viewId) {
+        const map = {
+            'view-bracket': 'nav-btn-bracket', 'view-news': 'nav-btn-news', 'view-howto': 'nav-btn-howto',
+            'view-schedule': 'nav-btn-schedule', 'view-highlights': 'nav-btn-highlights'
+        };
+        document.querySelectorAll('.nav-menu-btn').forEach(b => b.classList.remove('active-menu'));
+        const btnId = map[viewId];
+        if (btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.add('active-menu');
+        }
+    }
+
+    // --- SEARCH BOX ---
+    function runSiteSearch() {
+        const input = document.getElementById('site-search-input');
+        const rawQuery = input ? input.value.trim() : '';
+        const query = rawQuery.toLowerCase();
+        if (!query) return;
+
+        const matchedNews = NEWS_DATA.filter(n =>
+            n.title.toLowerCase().includes(query) || n.snippet.toLowerCase().includes(query)
+        );
+
+        const teamCodeMatches = Object.keys(TEAM_NAMES).filter(code =>
+            getTeamName(code).toLowerCase().includes(query) || code.toLowerCase().includes(query)
+        );
+        const matchedSchedule = [...SCHEDULE_R32, ...SCHEDULE_R16].filter(m =>
+            teamCodeMatches.includes(m.t1) || teamCodeMatches.includes(m.t2)
+        );
+
+        const titleEl = document.getElementById('search-results-title');
+        if (titleEl) titleEl.innerText = `🔍 Hasil Pencarian: "${rawQuery}"`;
+
+        let html = '';
+        if (matchedNews.length > 0) {
+            html += `<h3 style="font-family:'Segoe UI',sans-serif;color:#b5952f; margin-top:0;">Berita (${matchedNews.length})</h3><div class="news-scroll-list">`;
+            html += matchedNews.map(n => `
+                <a class="news-card" href="${n.url}" target="_blank" rel="noopener noreferrer">
+                    <div class="news-thumb">${n.icon}</div>
+                    <div class="news-info">
+                        <div class="news-source">${n.source}</div>
+                        <h3>${n.title}</h3>
+                        <p>${n.snippet}</p>
+                    </div>
+                </a>`).join('');
+            html += `</div>`;
+        }
+
+        if (matchedSchedule.length > 0) {
+            html += `<h3 style="font-family:'Segoe UI',sans-serif;color:#b5952f; margin-top:2vh;">Jadwal Pertandingan (${matchedSchedule.length})</h3>`;
+            html += `<table class="schedule-table"><tbody>` + matchedSchedule.map(m => `
+                <tr>
+                    <td><div class="sched-team"><img src="${getFlagUrl(m.t1)}"><span>${getTeamName(m.t1)}</span></div></td>
+                    <td style="text-align:center;">${m.status === 'done' ? `<span class="sched-score">${m.score}</span>` : `<span class="sched-vs">vs</span>`}</td>
+                    <td><div class="sched-team"><img src="${getFlagUrl(m.t2)}"><span>${getTeamName(m.t2)}</span></div></td>
+                    <td style="font-family:'Segoe UI',sans-serif;font-size:0.8vw;">${m.day}, ${m.time}</td>
+                </tr>`).join('') + `</tbody></table>`;
+        }
+
+        if (matchedNews.length === 0 && matchedSchedule.length === 0) {
+            html = `<p style="font-family:'Segoe UI',sans-serif;color:#888;">Tidak ditemukan hasil untuk "<strong>${rawQuery}</strong>". Coba kata kunci lain, misalnya nama negara (contoh: Brasil, Argentina) atau topik berita.</p>`;
+        }
+
+        const bodyEl = document.getElementById('search-results-body');
+        if (bodyEl) bodyEl.innerHTML = html;
+        switchView('view-search');
+    }
+
     // Database Bracket Inti
     const initialBracketData = () => ({
         matches: {
@@ -779,6 +1433,17 @@
     function switchView(viewId) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('view-active'));
         document.getElementById(viewId).classList.add('view-active');
+
+        const navbar = document.getElementById('top-navbar');
+        if (viewId === 'view-landing') {
+            if (navbar) navbar.classList.remove('active');
+            document.body.classList.remove('has-navbar');
+        } else {
+            if (navbar) navbar.classList.add('active');
+            document.body.classList.add('has-navbar');
+            if (typeof setActiveNavButton === 'function') setActiveNavButton(viewId);
+        }
+        window.scrollTo(0, 0);
     }
 
     function startPrediction() {
@@ -1458,6 +2123,7 @@
 
     renderBracket();
     openSharedFromURL();
+    subscribeToFirestoreData(); // aktifkan auto-update berita & jadwal dari Firestore
 </script>
 </body>
 </html>
