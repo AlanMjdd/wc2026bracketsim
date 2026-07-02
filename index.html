@@ -34,8 +34,10 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: 'Russo One', sans-serif;
-            overflow-y: auto; /* Allow vertical scrolling */
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+            overflow: hidden; /* Fit to screen */
+            overflow-y: auto; /* Izinkan scroll vertikal */
+    overflow-x: hidden; /* cegah scroll horizontal */
+    height: 100vh;
             user-select: none;
             letter-spacing: 0.5px;
         }
@@ -705,11 +707,11 @@
             <p>Isi tebakan skor untuk seluruh 32 pertandingan di bracket kamu sebelum submit</p>
         </div>
         <div class="scores-scroll" id="scores-scroll"></div>
-    </div>
-    <div id="scores-action-btn-container" class="action-btn-container">
-        <button class="btn btn-secondary" onclick="switchView('view-bracket'); renderBracket();">← Back To Bracket</button>
-        <button class="btn-randomize-all" onclick="randomizeAllScores()">🎲 Randomize All Scores</button>
-        <button id="btn-submit-scores" class="btn" onclick="submitPrediction()">Submit Prediction</button>
+        <div id="scores-action-btn-container" class="action-btn-container">
+            <button class="btn btn-secondary" onclick="switchView('view-bracket'); renderBracket();">Back To Bracket</button>
+            <button class="btn-randomize-all" onclick="randomizeAllScores()">Randomize All Scores</button>
+            <button id="btn-submit-scores" class="btn" onclick="submitPrediction()">Submit Prediction</button>
+        </div>
     </div>
 </div>
 
